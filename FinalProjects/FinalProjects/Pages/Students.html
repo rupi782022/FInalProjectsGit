@@ -1,0 +1,391 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link href="card.css" rel="stylesheet" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <!--<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>-->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link href="Style.css" rel="stylesheet" />
+    <link href="project.css" rel="stylesheet" />
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+            StudList = [];
+            document.getElementById('upload').addEventListener('change', handleFileSelect, false);
+            ajaxCall("GET", "../api/Specialization", "", getSpeciali, getStatusError);
+        });
+
+        $(document).on("click", "#logout", function () {
+            localStorage.clear();
+            window.location.href = "loginAdmin.html";
+        }
+        );
+
+        $(document).on("click", ".deleteBtn", function () {
+            mode = "delete";
+            markSelected(this);
+            var result = confirm("האם אתה בטוח שברצונך למחוק מנחה זה?");
+            if (result) {
+                DeleteStu(this.getAttribute('data-StuId'));
+            }
+        });
+
+
+        $(document).on("click", ".btn-Delte", function () {
+            mode = "delete";
+            markSelected(this);
+            var result = confirm("האם אתה בטוח שברצונך למחוק את כל הסטודנטים?");
+            if (result) {
+                DeleateAll();
+            }
+        });
+
+
+
+        function DeleteStu(StuId) {
+            let url = "../api/Students?StuId=" + StuId;
+            ajaxCall("PUT", url, "", DelcontsctS, PostSc);
+        }
+
+        function markSelected(btn) {
+            $("#StuList tr").removeClass("selected"); // remove seleced class from rows that were selected before
+            row = (btn.parentNode).parentNode; // button is in TD which is in Row
+            row.className = 'selected'; // mark as selected
+        }
+
+        function getMentorsListE(err) {
+            console.log(err)
+        }
+
+        function randerStudents(arr) {
+            try {
+                tbl = $('#StuList').DataTable({
+                    data: arr,
+                    pageLength: 5,
+                    columns: [
+                        {
+                            render: function (data, type, row, meta) {
+                                let FirstName = row.FirstName;
+                                let LastName = row.LastName;
+                                randDiv = "<div>" + FirstName + " " + LastName + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            data: "PhoneNumber",
+                            width: '12%', targets: 0,
+                        },
+                        {
+                            data: "SpecializationName",
+                            width: '12%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let StuId = "data-StuId='" + row.StudentId + "'";
+                                deletesBtn = "<button type='button' class = 'deleteBtn btn btn-danger' " + StuId + "> מחיקה </button>";
+                                return deletesBtn;
+                            },
+                            width: '12%', targets: 2,
+                        },
+                    ],
+                    "bDestroy": true,
+                    fixedColumns: true,
+                    "oLanguage": {
+                        "sSearch": "חיפוש:",
+                        "sLengthMenu": "הראה _MENU_ תוצאות",
+                        "sInfo": "הראה _START_ עד _END_ מתוך _TOTAL_ רשומות",
+                        "sEmptyTable": "אין רשומות בטבלה זו",
+                        "sInfoEmpty": "אין רשומות להצגה",
+                        "oPaginate": {
+                            "sNext": "הדף הבא",
+                            "sPrevious": "הדף הקודם"
+                        }
+                    }
+                });
+            }
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function getSpeciali(SpecialList) {
+            SpecialLis = SpecialList;
+            document.getElementById('specializationFilter').innerHTML = "";
+            console.log(SpecialList);
+            var str = '<option value=0>כל ההתמחויות</option>';
+            var str = '<option value=0>כל ההתמחויות</option>';
+            for (i = 0; i < SpecialList.length; i++) {
+                if (SpecialList[i].SpecializationType == 'RUP')
+                    str += '<option value="' + SpecialList[i].SpecializationName + '" id="' + (i + 1) + '">' + SpecialList[i].SpecializationName + '</option>'
+            }
+            str += '</select>'
+            document.getElementById('specializationFilter').innerHTML += str;
+            ajaxCall("GET", "../api/Students", "", getStudentsListS, getStatusError);
+        }
+
+        function getStudentsListS(StuList) {
+            StudList = StuList;
+            let url = "../api/Students?dum=" + 1;
+            ajaxCall("GET", url, "", getSpeName, getStatusError);
+        }
+
+        function getSpeName(StuList) {
+            console.log(StuList)
+            StudentList = StuList;
+            for (var j = 0; j < StudList.length; j++) {
+                StudentList.push(StudList[j])
+            }
+            for (var i = 0; i < StudentList.length; i++) {
+                for (var j = 0; j < SpecialLis.length; j++) {
+                    if (SpecialLis[j].SpecializationId == StudentList[i].SpecializationId)
+                        StudentList[i].SpecializationName = SpecialLis[j].SpecializationName;
+                }
+            }
+            randerStudents(StudentList);
+        }
+
+        function getvalSp(status) {
+            var spe = document.getElementById('specializationFilter').value;
+            if (spe == 0)
+                ajaxCall("GET", "../api/Mentors", "", getMentorsListS, getMentorsListE);
+            else {
+                for (var j = 0; j < SpecialLis.length; j++) {
+                    if (SpecialLis[j].SpecializationName == spe)
+                        spe = SpecialLis[j].SpecializationId;
+                }
+                let url = "../api/Mentors?spe=" + spe;
+                ajaxCall("GET", url, "", getMentorsListS, getStatusError);
+            }
+        }
+
+
+        var ExcelToJSON = function () {
+
+            this.parseExcel = function (file) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    var data = e.target.result;
+                    var workbook = XLSX.read(data, {
+                        type: 'binary'
+                    });
+                    workbook.SheetNames.forEach(function (sheetName) {
+                        // Here is your object
+                        var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+                        var json_object = JSON.stringify(XL_row_object);
+                        console.log(JSON.parse(json_object));
+                        jQuery('#xlx_json').val(json_object);
+                        for (var i = 0; i < XL_row_object.length; i++) {
+                            let studentId = XL_row_object[i].StudentId;
+                            let phoneNumber = XL_row_object[i].PhoneNumber;
+                            let firstName = XL_row_object[i].FirstName;
+                            let lastName = XL_row_object[i].LastName;
+                            let specializationName = XL_row_object[i].SpecializationName;
+                            for (var j = 0; j < SpecialLis.length; j++) {
+                                if (SpecialLis[j].SpecializationName == specializationName)
+                                    specializationId = SpecialLis[j].SpecializationId;
+                            }
+                            addStudent = {
+                                StudentId: studentId,
+                                FirstName: firstName,
+                                LastName: lastName,
+                                PhoneNumber: phoneNumber,
+                                SpecializationId: specializationId,
+                                StudentStatus: 1,
+                            }
+                            ajaxCall("POST", "../api/Students", JSON.stringify(addStudent), PostSc, getStatusError);
+                        }
+                        $('#StuList').DataTable().destroy();
+                        ajaxCall("GET", "../api/Students", "", getStudentsListS, getStatusError);
+                        return false;
+                    })
+                };
+
+                reader.onerror = function (ex) {
+                    console.log(ex);
+                };
+
+                reader.readAsBinaryString(file);
+            };
+        };
+
+        function handleFileSelect(evt) {
+
+            var files = evt.target.files; // FileList object
+            var xl2json = new ExcelToJSON();
+            xl2json.parseExcel(files[0]);
+        }
+
+        function getStatusError(err) {
+            console.log(err);
+        }
+
+        function PostSc() {
+            console.log("good")
+        }
+
+        function DelcontsctS() {
+            console.log("good");
+            $('#StuList').DataTable().destroy();
+            ajaxCall("GET", "../api/Students", "", getStudentsListS, getStatusError);
+            return false;
+        }
+
+        function Reset() {
+            $("#specializationFilter").val('0');
+            ajaxCall("GET", "../api/Mentors", "", getMentorsListS, getMentorsListE);
+        }
+
+        function DeleateAll() {
+            ajaxCall("PUT", "../api/Students", "", DelcontsctSC, PostSc);
+        }
+
+        function DelcontsctSC() {
+            console.log("good");
+            $('#StuList').DataTable().destroy();
+            ajaxCall("GET", "../api/Students", "", getStudentsListS, getStatusError);
+            return false;
+        }
+
+        function getStudentByTeamS(students) {
+            var str = '';
+            document.getElementById('StudentView').innerHTML = str;
+            for (var i = 0; i < students.length; i++) {
+                document.getElementById('TeamId').innerHTML = 'צוות מספר ' + students[0].TeamId;
+                str += students[i].FirstName + " " + students[i].LastName + " " + students[i].PhoneNumber;
+                str += '<br />';
+            }
+            document.getElementById('StudentView').innerHTML += str;
+        }
+
+
+        function getStatusError(err) {
+            console.log(err);
+        }
+
+        function closeForm() {
+            document.getElementById("viewTeam").style.display = "none";
+        }
+
+
+
+    </script>
+
+
+
+</head>
+<body>
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>שיבוץ סטודנטים לצוותים</h5>
+        </div>
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="project.html">פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="studentInTeam.html">צוותים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="Organizations.html">ארגונים</a>
+            </li>
+            <li>
+                <div class="dropdown">
+                    <button id="menu" class="nav-link active" aria-current="page">אנשי קשר</button>
+                    <div class="dropdown-content">
+                        <a class="nav-link" href="Contact.html">ארגונים</a>
+                        <a class="nav-link" href="guides.html">מנחים</a>
+                        <a class="nav-link" href="judges.html">שופטים</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="calender.html">יומן</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+
+        </ul>
+
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+            <!--<p>דף הבית->ארגונים</p>-->
+            <p><a class="home-link" href="Organizations.html">דף הבית </a>&#8592 סטודנטים</p>
+
+        </div>
+    </section>
+    <!-- Search bar  -->
+    <section>
+        <div>
+            <button class="btn btn-primary" data-toggle="modal" data-target="#addModal" onclick="document.getElementById('upload').click();">
+                + ייבא סטודנטים
+            </button>
+
+            <input id="upload" style="display:none;" type=file name="files[]">
+            <!--<input type="text" placeholder="חיפוש" />-->
+            <select id="specializationFilter" onchange="getvalSp(this)"></select>
+            <button type="button" id="btnReset" value="נקה הכל" onclick="Reset();">נקה הכל</button>
+            <button class="btn btn-Delte" data-toggle="modal" data-target="#DeleateAll">מחק הכל</button>
+        </div>
+    </section>
+    <!-- search bar ends  -->
+    <section>
+        <form id="pForm">
+            <table class="display nowrap" id="StuList" style=" width:100%">
+                <thead>
+                    <tr>
+                        <!--<td></td>-->
+                        <th>שם</th>
+                        <th>פלאפון</th>
+                        <th>התמחות</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <!--<tbody id="table-body"></tbody>-->
+            </table>
+            <center>
+                <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+            </center>
+        </form>
+    </section>
+
+
+
+</body>
+</html>

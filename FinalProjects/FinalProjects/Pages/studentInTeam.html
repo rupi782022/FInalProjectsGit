@@ -1,0 +1,408 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link href="card.css" rel="stylesheet" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <!--<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>-->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link href="Style.css" rel="stylesheet" />
+    <link href="project.css" rel="stylesheet" />
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            init();
+
+        });
+        $(document).on("click", "#logout", function () {
+            localStorage.clear();
+            window.location.href = "loginAdmin.html";
+        }
+        );
+
+        function init() {
+            if (localStorage.getItem("managerMail") == null) {
+                window.location.href = "loginAdmin.html";
+            }
+            ajaxCall("GET", "../api/StudentsTeam", "", team, getStuError);
+            loadSpecializationList();
+        }
+
+        /*function buttonEvents()*/
+
+        $(document).on("click", ".deleteBtn", function () {
+            mode = "delete";
+            markSelected(this);
+            var result = confirm("האם אתה בטוח שברצונך למחוק צוות זה?");
+            if (result) {
+                DeleteTeam(this.getAttribute('data-teamID'));
+            }
+        });
+
+
+        function DeleteTeam(teamId) {
+            DelTeam = teamId;
+            let url = "../api/Students?teamId=" + teamId;
+            ajaxCall("PUT", url, "", DeleteSTeamS, DeleteTeamE);
+        }
+        function DeleteSTeamS() {
+            let url = "../api/Teams?status=" + 0 + "&teamId=" + DelTeam;
+            ajaxCall("PUT", url, "", DeleteTeamS, DeleteTeamE);
+        }
+        function DeleteTeamS() {
+            console.log("good");
+            init();
+        }
+        function DeleteTeamE() {
+            console.log("not good");
+        }
+
+        function markSelected(btn) {
+            $("#StudentList tr").removeClass("selected"); // remove seleced class from rows that were selected before
+            row = (btn.parentNode).parentNode; // button is in TD which is in Row
+            row.className = 'selected'; // mark as selected
+        }
+
+
+        function team(StudentList) {
+            arrdel = [];
+            teamId = 0;
+            for (var i = 0; i < StudentList.length; i++) {
+                if (teamId != StudentList[i].TeamId) {
+                    teamId = StudentList[i].TeamId;
+                    for (var j = i + 1; j < StudentList.length; j++) {
+                        if (StudentList[j].TeamId == teamId) {
+                            if (StudentList[i].FirstName2 == undefined) {
+                                StudentList[i].FirstName2 = StudentList[j].FirstName;
+                                StudentList[i].LastName2 = StudentList[j].LastName;
+                                StudentList[i].PhoneNumber2 = StudentList[j].PhoneNumber;
+                                arrdel.push(j);
+                            }
+                            else if (StudentList[i].FirstName3 == undefined) {
+                                StudentList[i].FirstName3 = StudentList[j].FirstName;
+                                StudentList[i].LastName3 = StudentList[j].LastName;
+                                StudentList[i].PhoneNumber3 = StudentList[j].PhoneNumber;
+                                arrdel.push(j);
+                            }
+                            else {
+                                StudentList[i].FirstName4 = StudentList[j].FirstName;
+                                StudentList[i].LastName4 = StudentList[j].LastName;
+                                StudentList[i].PhoneNumber4 = StudentList[j].PhoneNumber;
+                                arrdel.push(j);
+                            }
+                        }
+                    }
+                }
+            }
+            console.log(arrdel);
+           arrdel= arrdel.sort(function (a, b) {
+               return b - a;
+            });
+            for (var i = 0; i <= arrdel.length - 1; i++) {
+                j = i - 1;
+                if (arrdel[i] != arrdel[j])
+                    StudentList.splice(arrdel[i], 1)
+            }
+            getTeam(StudentList);
+        }
+
+
+
+        function loadSpecializationList() {
+            ajaxCall("GET", "../api/Specialization", "", getSpeciali, getSpecialiError);
+        }
+
+        function getSpeciali(SpecialList) {
+            document.getElementById('specializationFilter').innerHTML = "";
+            console.log(SpecialList);
+            var str = '<option value=0>כל ההתמחויות</option>';
+            for (i = 0; i < SpecialList.length; i++) {
+                if (SpecialList[i].SpecializationType == 'RUP')
+                    str += '<option value="' + SpecialList[i].SpecializationName + '" id="' + (i + 1) + '">' + SpecialList[i].SpecializationName + '</option>'
+            }
+            str += '</select>'
+            document.getElementById('specializationFilter').innerHTML += str;
+        }
+
+        function getvalSp(status) {
+            var spe = document.getElementById('specializationFilter').value;
+            if (spe == 0)
+                ajaxCall("GET", "../api/StudentsTeam", "", team, getStuError);
+            else {
+                let url = "../api/StudentsTeam?spe=" + spe + "&dummy=" + 1;
+                ajaxCall("GET", url, "", team, getStuError);
+            }         
+        }
+
+        function getTeam(StudentList) {
+            console.log(StudentList);
+            //t = StudentList[0].FirstName3;
+            try {
+                tbl = $('#StudentList').DataTable({
+                    data: StudentList,
+                    pageLength: 6,
+                    columns: [
+                        {
+                            data: "TeamId",
+                            width: '3%', targets: 0,
+                        },
+                        {
+                            data: "SpecializationName",
+                            width: '6%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let FirstName = row.FirstName;
+                                let LastName = row.LastName;
+                                let PhoneNumber = row.PhoneNumber
+                                randDiv = "<div>" + FirstName + " " + LastName + "</div><div>" + PhoneNumber + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let FirstName = row.FirstName2;
+                                let LastName = row.LastName2;
+                                let PhoneNumber = row.PhoneNumber2;
+                                randDiv = "<div>" + FirstName + " " + LastName + "</div><div>" + PhoneNumber + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                if (row.FirstName3 == undefined) { FirstName3 = " "; }
+                                else { FirstName3 = row.FirstName3; }
+                                if (row.LastName3 == undefined) { LastName3 = " "; }
+                                else { LastName3 = row.LastName3; }
+                                if (row.PhoneNumber3 == undefined) { PhoneNumber3 = " "; }
+                                else { PhoneNumber3 = row.PhoneNumber3; }
+                                randDiv = "<div>" + FirstName3 + " " + LastName3 + "</div><div>" + PhoneNumber3 + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                if (row.FirstName4 == undefined) { FirstName4 = " "; }
+                                else { FirstName4 = row.FirstName4; }
+                                if (row.LastName4 == undefined) { LastName4 = " "; }
+                                else { LastName4 = row.LastName4; }
+                                if (row.PhoneNumber4 == undefined) { PhoneNumber4 = " "; }
+                                else { PhoneNumber4 = row.PhoneNumber3; }
+                                randDiv = "<div>" + FirstName4 + " " + LastName4 + "</div><div>" + PhoneNumber4 + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                str = "";
+                                let IsAccepted = row.IsAccepted;
+                                let team = row.TeamId;
+                                if (IsAccepted == false) {
+                                    str = '<select name="select1" onchange="getval(this,' + team + ')">\
+                                     <option value="0" id="0">נדרש אישור</option>';
+                                    str += '<option value="1" id="1">מאושר</option>';
+                                }
+                                else {
+                                    str = '<select name="select1" onchange="getval(this,' + team + ')">\
+                                     <option value="1" id="1">מאושר</option>';
+                                    str += '<option value="0" id="0">נדרש אישור</option>';
+                                }
+                                str += '</select>'
+                                return str;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let AdditionalInfo = row.AdditionalInfo;
+                                if (AdditionalInfo == "undefined") {
+                                    AdditionalInfo = ""
+                                }
+                                return AdditionalInfo;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let teamID = "data-teamID='" + row.TeamId + "'";
+                                deletesBtn = "<button type='button' id='deleteBtn' class = 'deleteBtn btn btn-danger' " + teamID + "> מחיקה </button>";
+                                return deletesBtn;
+                            },
+                            width: '12%', targets: 2,
+                        },
+                    ],
+                    "bDestroy": true,
+                    fixedColumns: true,
+                    "oLanguage": {
+                        "sSearch": "חיפוש:",
+                        "sLengthMenu": "הראה _MENU_ תוצאות",
+                        "sInfo": "הראה _START_ עד _END_ מתוך _TOTAL_ רשומות",
+                        "sEmptyTable": "אין רשומות בטבלה זו",
+                        "sInfoEmpty": "אין רשומות להצגה",
+                        "oPaginate": {
+                            "sNext": "הדף הבא",
+                            "sPrevious": "הדף הקודם"
+                        }
+                    }
+                });
+
+
+            }
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function getStuError(err) {
+            console.log(err)
+        }
+        function movetoteam() {
+            window.location.href = "team.html";
+        }
+
+        function movetoStudents() {
+            window.location.href = "Students.html";
+        }
+
+        function getval(status, teamid) {
+            selectedsta = status.value;
+            if (selectedsta == 1)
+                selectedsta = true;
+            else
+                selectedsta = false;
+            SaveStatus = {
+                TeamId: teamid,
+                IsAccepted: selectedsta,
+            }
+            ajaxCall("PUT", "../api/Teams", JSON.stringify(SaveStatus), PUTSCB, PUTECB)
+        }
+
+        function PUTSCB() {
+            console.log("good")
+        }
+        function PUTECB() {
+            console.log("notgood")
+        }
+
+        function getSpecialiError(err) {
+            console.log(err);
+        }
+
+
+
+    </script>
+</head>
+<body>
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>שיבוץ סטודנטים לצוותים</h5>
+        </div>
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="project.html">פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="studentInTeam.html">צוותים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="Organizations.html">ארגונים</a>
+            </li>
+            <li>
+                <div class="dropdown">
+                    <button id="menu" class="nav-link active" aria-current="page">אנשי קשר</button>
+                    <div class="dropdown-content">
+                        <a class="nav-link" href="Contact.html">ארגונים</a>
+                        <a class="nav-link" href="guides.html">מנחים</a>
+                        <a class="nav-link" href="judges.html">שופטים</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="calender.html">יומן</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+
+        </ul>
+
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+            <!--<p>דף הבית->ארגונים</p>-->
+            <p>
+                <a class="home-link" href="Organizations.html">דף הבית</a><a class="home-link"></a>&#8592 שיבוץ סטודנטים לצוותים
+                <br />
+                <button onclick="movetoStudents()" class="moveTeam">צפייה בסטודנטים </button>
+                <button onclick="movetoteam()" class="moveTeam">שיבוץ צוותים לפרויקטים </button>
+            </p>
+        </div>
+    </section>
+    <!-- Search bar  -->
+    <section>
+        <div>
+            <select id="specializationFilter" onchange="getvalSp(this)"></select>
+        </div>
+    </section>
+    <!-- search bar ends  -->
+    <section>
+        <form id="pForm">
+            <table class="display nowrap" id="StudentList" style=" width:100%">
+                <thead>
+                    <tr>
+                        <!--<td></td>-->
+                        <th>מספר צוות</th>
+                        <th>התמחות</th>
+                        <th>חבר צוות 1 </th>
+                        <th>חבר צוות 2 </th>
+                        <th>חבר צוות 3 </th>
+                        <th>חבר צוות 4 </th>
+                        <th>אישור ראש התמחות</th>
+                        <th>סיבת שיבוץ מיוחד</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+            <center>
+                <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+            </center>
+        </form>
+    </section>
+</body>
+</html>
+

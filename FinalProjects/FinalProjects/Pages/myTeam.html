@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+            integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="card.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+    <link href="login.css" rel="stylesheet" />
+
+</head>
+<body>
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <!--<img src="smiley.gif" alt="HTML tutorial" style="width:42px;height:42px;">-->
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>שיבוץ סטודנטים לצוות</h5>
+        </div>
+        <ul class="nav">
+            <!--<li class="nav-item">
+                <a class="nav-link" href="project.html">דף הבית</a>
+            </li>-->
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="myTeam.html">הצוות שלי</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="projectBook.html">ספר פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+        </ul>
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+
+            <p><a class="home-link" href="Organizations.html">דף הבית </a>&#8592 הצוות שלי</p>
+
+        </div>
+    </section>
+    <section>
+        <div>
+            <h1>הצוות שלי</h1>
+        </div>
+    </section>
+    <br />
+    <div class="row" id="space">
+        <div class="col-sm-3">
+            <h5>חבר צוות 1</h5>
+        </div>
+        <div class="col-sm-3">
+            <h5>חבר צוות 2</h5>
+        </div>
+        <div class="col-sm-3">
+            <h5>חבר צוות 3</h5>
+        </div>
+        <div class="col-sm-3">
+            <h5>חבר צוות 4</h5>
+        </div>
+    </div>
+    <form id="newTeam">
+        <div class="select-box" id="space">
+            <div class="row" id="studetRow">
+            </div>
+        </div>
+        <br />
+        <div class="container">
+            <button id="btnCon" type="submit" style="">הגש</button>
+            <button id="btnSubmitAgain" type="submit" style="display:none" onclick="UpdateTeam()">הגש מחדש</button>
+        </div>
+
+        <br />
+        <br />
+
+    </form>
+    <br />
+    <br />
+    <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+
+</body>
+</html>
+<script>
+    reason ="undefined";
+    teamId="";
+    $(document).ready(function () {
+        init();
+    });
+    function init() {
+        if (localStorage.getItem("teamId") == null) {
+            window.location.href = "login.html";
+        }
+        getStudentsTeamsList();
+        $("#newTeam").submit(SaveToDB);
+    }
+
+    $(document).on("click", "#logout", function () {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+    );
+
+    function getStudentsTeamsList() {
+        let url = "../api/Students?dum=" + 1;
+        ajaxCall("GET", url, "", getStudentsTeamListS, getStudentsListE);
+    }
+
+
+
+    function getStudentsTeamListS(studentsList) {
+        teamId = localStorage.getItem("teamId");
+        console.log(teamId);
+        for (var i = 0; i < studentsList.length; i++) {
+            if (studentsList[i].TeamId == teamId) {
+                //alert("צוות כבר נרשם!");
+                document.getElementById('btnCon').style.visibility = "hidden";
+                document.getElementById('btnSubmitAgain').style.display = "block";
+                return;
+            }
+        }
+        getStudentsList();
+    }
+
+    function getStudentsList() {
+        ajaxCall("GET", "../api/Students", "", getStudentsListS, getStudentsListE);
+    }
+
+    //רק אלה שללא צוות
+    function getStudentsListS(studentsList) {
+        console.log(studentsList)
+        let str = "";
+        for (var i = 1; i < 5; i++) {
+            if (i < 3) {
+                str += '<div class="col-lg-3">\
+                    <select required name="students" id="select-box'+ i + '" class="select">\
+                        <option value="value" selected>בחר חבר צוות '+ i + '</option>'
+            }
+            else {
+                str += '<div class="col-lg-3">\
+                    <select id="select-box'+ i + '" class="select">\
+                        <option value="value" selected>בחר חבר צוות '+ i + '</option>'
+            }
+            for (var j = 0; j < studentsList.length; j++) {
+                str += '<option value="' + studentsList[j].StudentId + ':' + studentsList[j].SpecializationId+'">' + studentsList[j].FirstName + ' ' + studentsList[j].LastName + '</option>';
+            }
+            str += '</select></div>'
+        }
+        document.getElementById("studetRow").innerHTML = str;
+    }
+
+    function getStudentsListE(err) {
+        console.log(err)
+    }
+    function SaveToDB(event) {
+        event.preventDefault()
+        teamId = localStorage.getItem("teamId");
+        console.log(teamId);
+        student1arr = document.getElementById('select-box1').value.split(":"); 
+        student1 = student1arr[0];
+        student1spe = student1arr[1];
+        student2arr = document.getElementById('select-box2').value.split(":");
+        student2 = student2arr[0];
+        student2spe = student2arr[1];
+        student3arr = document.getElementById('select-box3').value.split(":");
+        student3 = student3arr[0];
+        student3spe = student3arr[1];
+        student3arr = document.getElementById('select-box3').value.split(":");
+        student3 = student3arr[0];
+        student3spe = student3arr[1];
+        student4arr = document.getElementById('select-box4').value.split(":");
+        student4 = student4arr[0];
+        student4spe = student4arr[1];
+        if (student1 == student2 || student1 == student3 || student1 == student4 || student2 == student3 || student2 == student4 || (student3 == student4) && (student4!="value"))
+        {
+            alert("יש לבחור סטודנטים שונים");
+            return;
+        }
+        if (student3 == "value" || student4 != "value") {
+            reason = prompt("בבקשה רשום סיבה לחריגה מגודל הצוות:", "");
+            if (reason == null || reason == "") {
+                alert("יש להזין סיבה");
+                return;
+            }
+        }
+         {
+            if (student1 != "value" && student2 != "value" && student3 != "value" && student4 != "value") {
+                if ((student1spe == student2spe) && (student2spe == student3spe) && (student3spe == student4spe)) {
+                    let url = "../api/Students?student1=" + student1 + "&student2=" + student2 + "&student3=" + student3 + "&student4=" + student4 + "&teamid=" + teamId + "&spe=" + student3spe;
+                    ajaxCall("PUT", url, "", PUTSCB, PUTECB);
+                }
+                else {
+                    alert("יש לבחור סטודנטים מאותה התמחות");
+                    return;
+                }
+            }
+            else if (student1 != "value" && student2 != "value" && student3 != "value") {
+                if ((student1spe == student2spe) && student2spe == student3spe) {
+                    let url = "../api/Students?student1=" + student1 + "&student2=" + student2 + "&student3=" + student3 + "&teamid=" + teamId + "&spe=" + student3spe;
+                    ajaxCall("PUT", url, "", PUTSCB, PUTECB);
+                }
+                else {
+                    alert("יש לבחור סטודנטים מאותה התמחות");
+                    return;
+                }
+            }
+            else {
+                if (student1spe == student2spe) {
+                    let url = "../api/Students?student1=" + student1 + "&student2=" + student2 + "&teamid=" + teamId + "&spe=" + student1spe;
+                    ajaxCall("PUT", url, "", PUTSCB, PUTECB);
+                }
+                else {
+                    alert("יש לבחור סטודנטים מאותה התמחות");
+                    return;
+                }
+            }
+        }
+    }      
+
+
+    
+
+    function UpdateTeam() {
+        let url = "../api/Students?teamId=" + teamId;
+        ajaxCall("PUT", url, "", PUTSCBTeam, PUTECB);
+    }
+
+    function PUTSCBTeam() {
+        document.getElementById('btnCon').style.visibility = "visible";
+        document.getElementById('btnSubmitAgain').style.display = "none";
+        getStudentsTeamsList();
+    }
+
+    function PUTSCB() {
+        let url = "../api/Teams?reason=" + reason + "&teamid=" + teamId;
+        ajaxCall("PUT", url, "", PUTSReasomCB, PUTECB);
+        console.log('--------------------------------------------------')
+        window.location.href = "projectBook.html";
+
+    }
+    function PUTSReasomCB() {
+        console.log("good")
+    }
+    function PUTECB() {
+        console.log("notgood")
+    }
+
+</script>

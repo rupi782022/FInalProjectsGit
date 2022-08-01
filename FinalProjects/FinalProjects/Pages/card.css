@@ -1,0 +1,88 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+.card {
+    text-align: center;   
+}
+a.nav-link.active {
+    color: rgb(64, 148, 114);
+    font-weight: bold;
+}
+
+body {
+    direction: rtl;
+    background-color: #eff3f9;
+}
+.menubar {
+    box-sizing: content-box;
+}
+h5 {
+    color: #005275;
+    padding-top: 1.5%;
+    font-weight: bold;
+    /*  margin-right: -7%;
+*/
+}
+.nav {
+    background-color: white;
+}
+.nav-link {
+    color: #005275;
+    font-weight: bold;
+}
+
+    .nav-link:hover {
+        color: rgb(64, 148, 114);
+        font-weight: bold;
+    }
+.home-link {
+    color: black;
+    background-color: transparent;
+    text-decoration: none;
+}
+
+    .home-link:hover {
+        color: rgb(64, 148, 114);
+    }
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+.card img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+h1 {
+    text-align: center;
+    color: rgb(64, 148, 114);
+    padding-top: 1.5%;
+    font-weight: bold;
+    /*  margin-right: -7%;
+*/
+}
+a#logout {
+    position: absolute;
+    right: 90%;
+}
+.row.top-buffer {
+    margin-top: 20px;
+}
+.deleteChoose{
+    background-color:gray;
+    border-color:gray;
+}
+#organizationFilter, #specializationFilter, #ph, #phSp {
+    width: 150px !important;
+    height: 40px !important;
+    border-radius: 5px;
+    background-color: #005275cc;
+    color: white;
+    text-align: center;
+    margin-bottom: 15px
+}
+button.btn.btn-primary.choose {
+    background-color: #005275;
+    border-color: #005275;
+    color: white;
+}

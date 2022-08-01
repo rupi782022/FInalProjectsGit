@@ -1,0 +1,1031 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link href="card.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <!--<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>-->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+    <link href="project.css" rel="stylesheet" />
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            init();
+        });
+        $(document).on("click", "#logout", function () {
+            localStorage.clear();
+            window.location.href = "loginAdmin.html";
+        }
+        );
+        function ToProjectBook() {
+            window.location.href = "projectBookAdmin.html";
+        }
+
+        function init() {
+            if (localStorage.getItem("managerMail") == null) {
+                window.location.href = "loginAdmin.html";
+            }
+            ajaxCall("GET", "../api/Specialization", "", getSpeciali, getStatusError);
+            $("#newPro").submit(SaveSpe);
+            $("#proForm").submit(SaveEdit);
+            ajaxCall("GET", "../api/Organizations", "", getOrg, getOrgError);
+            ajaxCall("GET", "../api/ProjectStatus", "", getStstus, getStatusError);
+            ajaxCall("GET", "../api/ContactInProjects", "", getPro, getStatusError);
+            $('#search').val("0");
+
+            $('#search').change(function () {
+                selectVal = $('#mySelect').val();
+
+                if (selectVal == 0) {
+                    $('#btnReset').prop("disabled", true);
+                }
+                else {
+                    $('#btnReset').prop("disabled", false);
+                }
+            });
+
+            $("#organizationName").change(function () {
+                orgName = $("#organizationName").val();
+
+                getContactOfOrg(orgName);
+            });
+
+        }
+
+        function getSpeciali(SpecialList) {
+            console.log(SpecialList);
+            document.getElementById('inputSpecialization').innerHTML = "";
+            document.getElementById('phSp').innerHTML = "";
+            var str = '';
+            str = '<select name="select1">\
+                                                                    <option value=0>כל ההתמחויות</option>'
+            for (i = 0; i < SpecialList.length; i++) {
+                if (SpecialList[i].SpecializationType == 'RUP')
+                    str += '<option value="' + SpecialList[i].SpecializationName + '" id="' + (i + 1) + '">' + SpecialList[i].SpecializationName + '</option>'
+            }
+            str += '</select>'
+            console.log(str);
+            document.getElementById('inputSpecialization').innerHTML += str;
+            document.getElementById('phSp').innerHTML += str;
+        }
+
+
+
+        function openForm(id) {
+            ThisnewsId = id;
+            document.getElementById("myForm").style.display = "block";
+        }
+        function SaveSpe() {
+            let spe = $("#inputSpecialization").val();
+            let url = "../api/Specialization?SpeText=" + spe;
+            ajaxCall("GET", url, "", savepro, getstatustE);
+            $("#editModal").hide();
+            return false;
+
+        }
+
+        function savepro(Special) {
+            let specialization = Special
+            let projectName = $("#projectName").val();
+            let description = $("#description").val();
+            addpro = {
+                ProjectName: projectName,
+                ProjectDescription: description,
+                SpecializationId: specialization,
+                Notes: ' ',
+                Url: ' ',
+                statusId: 1,
+            }
+            ajaxCall("POST", "../api/Projects", JSON.stringify(addpro), postSCB, postECB);
+            document.getElementById("myForm").style.display = "none";
+        }
+
+        function postSCB(status) {
+            let organizationName = $("#organizationName").val();
+            let phone = $("#contact1").val();
+            let projectName = $("#projectName").val();
+            addContactInpro = {
+                ProjectName: projectName,
+                OrganizationName: organizationName,
+                ContactPhoneNumber: phone,
+                Contact1: 1,
+            }
+            ajaxCall("POST", "../api/ContactInProjects", JSON.stringify(addContactInpro), contact2Post, postECB)
+        }
+
+        function contact2Post() {
+            let phone = $("#contact2").val();
+            if (phone != 0) {
+                let projectName = $("#projectName").val();
+                let organizationName = $("#organizationName").val();
+                addContactInpro = {
+                    ProjectName: projectName,
+                    OrganizationName: organizationName,
+                    ContactPhoneNumber: phone,
+                    Contact1: 0,
+                }
+                ajaxCall("POST", "../api/ContactInProjects", JSON.stringify(addContactInpro), PUTSCB, postECB)
+            }
+        }
+
+
+        function postEcontact2(err) {
+            alert("איש קשר 2 לא נשמר, נסה שנית")
+        }
+
+        function PutPro(pro) {
+            try {
+                let url = "../api/Projects";
+                ajaxCall("PUT", url, JSON.stringify(pro), PUTSCB, PUTECB);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+
+        async function CheckPostPut() {
+            let url = "../api/ContactInProjects?ProName=" + $('#inputProjectName').html();
+            ajaxCall("GET", url, "", postPut, getOrgByNameError);
+        }
+
+        async function postPut(pro) {
+            let phone = $("#contact2edit").val();
+            if (phone != 0) {
+                let projectName = $('#inputProjectName').html();
+                let organizationName = $("#inputOrgName").html();
+                addContactInpro = {
+                    ProjectName: projectName,
+                    OrganizationName: organizationName,
+                    ContactPhoneNumber: phone,
+                    Contact1: 0,
+                }
+                if (pro.length > 1)
+                    ajaxCall("PUT", "../api/ContactInProjects", JSON.stringify(addContactInpro), PUTSCB, postECB);
+                else
+                    ajaxCall("POST", "../api/ContactInProjects", JSON.stringify(addContactInpro), PUTSCB, postECB);
+            }
+            init();
+            return false;
+        }
+
+
+
+        function PUTcontsctS() {
+            console.log("good")
+        }
+        function PUTcontsctE() {
+            console.log("notgood")
+        }
+
+        function PUTSCB() {
+            console.log("good")
+        }
+        function PUTECB() {
+            console.log("notgood")
+        }
+        function getstatustS(sta) {
+            console.log(sta)
+            Newstatus = sta;
+            let projectName = $('#inputProjectName').html();
+            let organizationName = $("#inputOrgName").html();
+            let description = $("#inputSummary").val();
+            if (($("#inputNotes").val()) != "") {
+                note = $("#inputNotes").val();
+            }
+            else {
+                note = ' ';
+            }
+            if (($("#inputUrl").val()) != "") {
+                url = $("#inputUrl").val();
+            }
+            else {
+                url = ' ';
+            }
+            pro = {
+                ProjectName: projectName,
+                ProjectDescription: description,
+                Notes: note,
+                Url: url,
+                statusId: Newstatus
+            }
+            PutPro(pro);
+            let phone = $("#contact1edit").val();
+            addContactInpro = {
+                ProjectName: projectName,
+                OrganizationName: organizationName,
+                ContactPhoneNumber: phone,
+                Contact1: 1,
+            }
+            ajaxCall("PUT", "../api/ContactInProjects", JSON.stringify(addContactInpro), CheckPostPut, postECB)
+            document.getElementById("proForm").style.display = "none";
+
+        }
+
+
+
+        function getstatustE() {
+            console.log("notgood")
+        }
+
+        function markSelected(btn) {
+            $("#ProList tr").removeClass("selected"); // remove seleced class from rows that were selected before
+            row = (btn.parentNode).parentNode; // button is in TD which is in Row
+            row.className = 'selected'; // mark as selected
+        }
+
+
+
+        function getOrgByName(name) {
+            for (i in orgsdata) {
+                if (orgsdata[i].OrganizationName == name)
+                    return orgsdata[i];
+            }
+            return null;
+        }
+
+
+        function getStstus(statusList) {
+            console.log(statusList);
+            document.getElementById('ph').innerHTML = '';
+            strH = '';
+            strH = '<select name="select1">\
+                                                                    <option value=0>כל הסטטוסים</option>';
+            document.getElementById('ph').innerHTML = strH;
+            var str = '';
+            for (i = 0; i < statusList.length; i++) {
+                str += '<option value="' + statusList[i].StatusText + '" id="' + (i + 1) + '">' + statusList[i].StatusText + '</option>'
+            }
+            str += '</select>'
+            console.log(str);
+            document.getElementById('ph').innerHTML += str;
+
+            document.getElementById('inputStatus').innerHTML += str;
+        }
+        function getStatusError(err) {
+            console.log(err);
+        }
+
+        /*function buttonEvents()*/
+        $(document).on("click", ".editBtn", function () {
+            document.getElementById("proForm").style.display = "block";
+            mode = "edit";
+            markSelected(this);
+            $("#editModal").show();
+            row.className = 'selected';
+            console.log(this.getAttribute('data-proName'))
+            getProView(this.getAttribute('data-proName'));
+            localStorage.setItem("mode", mode);
+            $("#editModal :input").prop("disabled", false);
+        });
+        $(document).on("click", ".deleteBtn", function () {
+            mode = "delete";
+            markSelected(this);
+            var result = confirm("האם אתה בטוח שברצונך למחוק פרויקט זה?");
+            if (result) {
+                DeleteProj(this.getAttribute('data-proName'));
+            }
+        });
+
+
+        $(document).on("click", ".viewBtn", function () {
+            mode = "view";
+            markSelected(this);
+            $("#viewDiv").show();
+            row.className = 'selected';
+            $("#viewDiv :input").prop("disabled", false);
+            getProView(this.getAttribute('data-proName'));
+            localStorage.setItem("mode", mode);
+        });
+
+        function getProView(proName) {
+            let url = "../api/ContactInProjects?ProName=" + proName;
+            ajaxCall("GET", url, "", getProByNameS, getOrgByNameError);
+        }
+
+        function DeleteProj(proName) {
+            let url = "../api/Projects?proName=" + proName;
+            ajaxCall("PUT", url, "", DeleteProjS, DeleteProjE);
+        }
+
+        function DeleteProjS() {
+            console.log("good");
+            init();
+
+        }
+        function DeleteProjE() {
+            console.log("not good");
+        }
+
+        function deleteContactsE(err) {
+            console.log(err);
+        }
+
+        function getval(status) {
+            selectedsta = status.selectedIndex;
+            var spe = document.getElementById('phSp').value;
+            if (selectedsta == 0 && spe == 0) {
+                ajaxCall("GET", "../api/ContactInProjects", "", getPro, getStatusError);
+            }
+            else if (spe == 0) {
+                let url = "../api/ContactInProjects?selectedsta=" + selectedsta;
+                ajaxCall("GET", url, "", getPro, getStatusError);
+            }
+            else if (selectedsta == 0) {
+                let url = "../api/ContactInProjects?spe=" + spe + "&dummy=" + 1;
+                ajaxCall("GET", url, "", getPro, getStatusError);
+            }
+            else {
+                let url = "../api/ContactInProjects?selectedsta=" + selectedsta + "&spe=" + spe;
+                ajaxCall("GET", url, "", getPro, getStatusError);
+            }
+        }
+
+        function getvalSp(status) {
+            spe = document.getElementById('phSp').value;
+            var selectedsta = document.getElementById('ph').selectedIndex;
+            if (selectedsta == 0 && spe == 0) {
+                ajaxCall("GET", "../api/ContactInProjects", "", getPro, getStatusError);
+            }
+            else if (selectedsta == 0) {
+                let url = "../api/ContactInProjects?spe=" + spe + "&dummy=" + 1;
+                ajaxCall("GET", url, "", getPro, getStatusError);
+            }
+            else if (spe == 0) {
+                let url = "../api/ContactInProjects?selectedsta=" + selectedsta;
+                ajaxCall("GET", url, "", getPro, getStatusError);
+            }
+            else {
+                let url = "../api/ContactInProjects?selectedsta=" + selectedsta + "&spe=" + spe;
+                ajaxCall("GET", url, "", getPro, getStatusError);
+            }
+        }
+
+
+        function getProByNameS(pro) {
+            console.log(pro);
+            mode = localStorage.getItem("mode");
+            if (mode == "edit") {
+                getProEdit(pro);
+            }
+            else
+                getProViewS(pro);
+        }
+        function getProViewS(pro) {
+            for (var i = 0; i < pro.length; i++) {
+                if (pro[i].Contact1 == true) {
+                    document.getElementById('inputOrgNameview').innerHTML = pro[i].OrganizationName;
+                    document.getElementById('ProjectNameView').innerHTML = pro[i].ProjectName;
+                    document.getElementById('descriptionview').innerHTML = pro[i].ProjectDescription;
+                    document.getElementById('inputSpecializationview').innerHTML = pro[i].SpecializationName;
+                    document.getElementById('inputStatusview').innerHTML = pro[i].StatusText;
+                    document.getElementById('inputUrlview').setAttribute("href", pro[i].Url);
+                    document.getElementById('inputUrlview').innerHTML = pro[i].Url;
+                    document.getElementById('inputNotesview').innerHTML = pro[i].Notes;
+                    document.getElementById('nameView').innerHTML = pro[i].FirstName + " " + pro[i].LastName;
+                    document.getElementById('contactView').innerHTML = pro[i].Role + "</br>" + pro[i].Email + "</br>" + pro[i].PhoneNumber;
+                }
+                else {
+                    document.getElementById('Contact2').innerHTML = "איש קשר 2";
+                    document.getElementById('nameView2').innerHTML = pro[i].FirstName + " " + pro[i].LastName;
+                    document.getElementById('contactView2').innerHTML = pro[i].Role + "</br>" + pro[i].Email + "</br>" + pro[i].PhoneNumber;
+                }
+            }
+        }
+
+
+
+        //function getContactOfPro(ProName) {
+        //    let url = "../api/ContactInProjects?ProName=" + ProName;
+        //    ajaxCall("GET", url, "", getProContactS, getOrgContactError);
+        //}
+
+        //function getProContactS(contacts) {
+        //    console.log(contacts);
+        //    for (var i = 0; i < contacts.length; i++) {
+        //        if (contacts[i].IsMajor == false) {
+        //            document.getElementById('Contact2').innerHTML = "איש קשר 2";
+        //            document.getElementById('nameView2').innerHTML = contacts[i].FirstName + " " + contacts[i].LastName;
+        //            document.getElementById('contactView2').innerHTML = contacts[i].Role + "</br>" + contacts[i].Email + "</br>" + contacts[i].PhoneNumber;
+        //            break;
+        //        }
+        //    }
+        //}
+
+        function getProEdit(pro) {
+            document.getElementById('contact2edit').innerHTML = '';
+            for (var i = 0; i < pro.length; i++) {
+                if (pro[i].Contact1 == true) {
+                    document.getElementById('inputProjectName').innerHTML = pro[i].ProjectName;
+                    document.getElementById('inputOrgName').innerHTML = pro[i].OrganizationName;
+                    document.getElementById('inputSummary').value = pro[i].ProjectDescription;
+                    document.getElementById('inputNotes').value = pro[i].Notes;
+                    document.getElementById('inputUrl').value = pro[i].Url;
+                    strC = '';
+                    strC2 = '';
+                    strC = '<select name="select1">\
+                                                                    <option value="' + pro[i].PhoneNumber + '" id="' + pro[i].PhoneNumber + '">' + pro[i].FirstName + ' ' + pro[i].LastName + '</option>';
+                    document.getElementById('contact1edit').innerHTML = '';
+                    document.getElementById('contact1edit').innerHTML = strC;
+                }
+                else {
+                    strC2 = '<select name="select1">\
+                                                                    <option value="' + pro[i].PhoneNumber + '" id="' + pro[i].PhoneNumber + '">' + pro[i].FirstName + ' ' + pro[i].LastName + '</option>';
+                    document.getElementById('contact2edit').innerHTML = strC2;
+                }
+            }
+            getContactOfPro(pro[0].OrganizationName);
+            str = '';
+            str = '<select name="select1">\
+                                                                    <option value="'+ pro[0].StatusText + '">' + pro[0].StatusText + '</option>';
+            document.getElementById('inputStatus').innerHTML = '';
+            document.getElementById('inputStatus').innerHTML = str;
+            ajaxCall("GET", "../api/ProjectStatus", "", getStstus, getStatusError);
+        }
+
+        function SaveEdit() {
+            console.log("gzf")
+            let inputStatus1 = $("#inputStatus").val();
+            let url = "../api/ProjectStatus?StatusProText=" + inputStatus1;
+            ajaxCall("GET", url, "", getstatustS, getstatustE);
+            $("#editModal").hide();
+            return false;
+
+        }
+        function getContactOfOrg(orgName) {
+            let url = "../api/OrgContacts?orgName=" + orgName;
+            ajaxCall("GET", url, "", getOrgContactS, getOrgContactError);
+        }
+        function getOrgContactS(contacts) {
+            var str = '<option value="0">בחר איש קשר</option>';
+            document.getElementById("contact1").innerHTML = str;
+            str = '';
+            for (i = 0; i < contacts.length; i++) {
+                str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+            }
+            str += '</select>';
+            document.getElementById("contact1").innerHTML += str;
+            document.getElementById("contact1edit").innerHTML += str;
+
+            if (contacts.length > 1) {
+                var str = '<option value="0">בחר איש קשר</option>';
+                document.getElementById("contact2").innerHTML = str;
+                str = '';
+                for (i = 0; i < contacts.length; i++) {
+                    str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+                }
+                str += '</select>';
+                document.getElementById("contact2").innerHTML += str;
+
+            }
+        }
+
+        function getContactOfPro(orgname) {
+            let url = "../api/OrgContacts?orgName=" + orgname;
+            ajaxCall("GET", url, "", getProContactS, getOrgContactError);
+        }
+
+        function getProContactS(contacts) {
+            var str = '<option value="0">בחר איש קשר</option>';
+            document.getElementById("contact1").innerHTML = str;
+            str = '';
+            for (i = 0; i < contacts.length; i++) {
+                str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+            }
+            str += '</select>';
+            document.getElementById("contact1").innerHTML += str;
+            document.getElementById("contact1edit").innerHTML += str;
+
+            if (contacts.length > 1 && document.getElementById("contact2edit").innerHTML != '') {
+                var str = '<option value="0">בחר איש קשר</option>';
+                document.getElementById("contact2").innerHTML = str;
+                str = '';
+                for (i = 0; i < contacts.length; i++) {
+                    str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+                }
+                str += '</select>';
+                document.getElementById("contact2").innerHTML += str;
+                document.getElementById("contact2edit").innerHTML += str;
+            }
+            else if (contacts.length > 1) {
+                var str = '<option value="0">בחר איש קשר</option>';
+                document.getElementById("contact2").innerHTML = str;
+                document.getElementById("contact2edit").innerHTML = str;
+                str = '';
+                for (i = 0; i < contacts.length; i++) {
+                    str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+                }
+                str += '</select>';
+                document.getElementById("contact2").innerHTML += str;
+                document.getElementById("contact2edit").innerHTML += str;
+
+            }
+        }
+        function getOrgContactError(err) {
+            console.log(err);
+        }
+
+
+        function getOrgByNameError(err) {
+            console.log(err);
+        }
+
+        function getPro(pro) {
+            prosdata = pro;
+            try {
+                tbl = $('#ProList').DataTable({
+                    data: pro,
+                    pageLength: 5,
+                    columns: [
+                        {
+                            render: function (data, type, row, meta) {
+                                let proName = row.ProjectName;
+                                return proName;
+                            },
+                            width: '10%', targets: 2,
+                            data: "ProjectName",
+                            width: '6%', targets: 0,
+                        },
+                        {
+                            data: "OrganizationName",
+                            width: '6%', targets: 0,
+                        },
+                        {
+                            data: "ProjectDescription",
+                            width: '16%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let FirstName = row.FirstName;
+                                let LastName = row.LastName;
+                                let Email = row.Email;
+                                randDiv = "<div>" + FirstName + " " + LastName + "</div><div>" + Email + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+
+                        },
+                        {
+                            data: "PhoneNumber",
+                            width: '4%', targets: 0,
+                        },
+                        {
+                            data: "StatusText",
+                            width: '4%', targets: 0,
+                        },
+                        {
+                            data: "Notes",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let proName = "data-proName='" + row.ProjectName + "'";
+                                editBtn = "<button type='button' id='editBtn' class = 'editBtn btn btn-success' " + proName + "> עריכה </button>";
+                                deletesBtn = "<button type='button' id='deleteBtn' class = 'deleteBtn btn btn-danger' " + proName + "> מחיקה </button>";
+                                viewBtn = "<button type='button' class = 'viewBtn btn btn-info' " + proName + "> צפייה </button>";
+                                return viewBtn + editBtn + deletesBtn;
+                            },
+                            width: '12%', targets: 2,
+                        },
+
+                    ],
+                    "bDestroy": true,
+                    fixedColumns: true,
+                    "oLanguage": {
+                        "sSearch": "חיפוש:",
+                        "sLengthMenu": "הראה _MENU_ תוצאות",
+                        "sInfo": "הראה _START_ עד _END_ מתוך _TOTAL_ רשומות",
+                        "sEmptyTable": "אין רשומות בטבלה זו",
+                        "sInfoEmpty": "אין רשומות להצגה",
+                        "oPaginate": {
+                            "sNext": "הדף הבא",
+                            "sPrevious": "הדף הקודם"
+                        }
+                    }
+                });
+                //buttonEvents();
+
+            }
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function getOrg(orgs) {
+            console.log(orgs);
+            orgsdata = orgs;
+            orgsName = [];
+            for (var i = 0; i < orgsdata.length; i++) {
+                orgsName.push(orgsdata[i].OrganizationName)
+            }
+            $(function () {
+                var availableTags = orgsName;
+                $("#organizationName").autocomplete({
+                    source: availableTags
+                });
+            });
+        }
+
+
+
+        function getOrgError(err) {
+            console.log(err)
+        }
+
+        //async function test() {
+        //    try {
+        //        const res = await ajaxCall("POST", "../api/Organizations", JSON.stringify(addorg), postSCB, postECB);
+        //        console.log(res)
+        //    } catch (err) {
+        //        console.log(err);
+        //    }
+        //}
+
+        //async function test2() {
+        //    try {
+        //        const res = await ajaxCall("POST", "../api/OrgContacts", JSON.stringify(addMajorcontact), postScontact, postEcontact);
+        //        console.log(res)
+        //    } catch (err) {
+        //        console.log(err);
+        //    }
+        //}
+        //async function test3() {
+        //    try {
+        //        const res = await ajaxCall("POST", "../api/OrgContacts", JSON.stringify(addAnothercontact), postScontact, postEcontact);
+        //        console.log(res)
+        //    } catch (err) {
+        //        console.log(err);
+        //    }
+        //}
+
+
+
+
+
+
+
+        function postECB(err) {
+            alert("הארגון לא נשמר, נסה שנית")
+        }
+
+        function getOrgStaE(err) {
+            alert("נסה שנית")
+        }
+
+
+        function postEcontact(err) {
+            alert("איש קשר לא נשמר, נסה שנית")
+        }
+
+
+        function closeForm() {
+            document.getElementById("myForm").style.display = "none";
+            document.getElementById("proForm").style.display = "none";
+            document.getElementById("viewDiv").style.display = "none";
+            document.getElementById('nameView2').innerHTML = "";
+            document.getElementById('contactView2').innerHTML = "";
+            $("#editModal").hide();
+        }
+
+        function getReadIdfromDBError(arr) {
+            return arr;
+        }
+
+        function Reset() {
+            $("#ph").val('0');
+            $("#phSp").val('0');
+            ajaxCall("GET", "../api/ContactInProjects", "", getPro, getStatusError);
+        }
+
+        function error(data) {
+            console.log(data);
+        }
+
+    </script>
+
+    <title></title>
+</head>
+<body>
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>פרויקטים</h5>
+        </div>
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="studentInTeam.html">צוותים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="Organizations.html">ארגונים</a>
+            </li>
+            <li>
+                <div class="dropdown">
+                    <button id="menu" class="nav-link active" aria-current="page">אנשי קשר</button>
+                    <div class="dropdown-content">
+                        <a class="nav-link" href="Contact.html">ארגונים</a>
+                        <a class="nav-link" href="guides.html">מנחים</a>
+                        <a class="nav-link" href="judges.html">שופטים</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="calender.html">יומן</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+        </ul>
+
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+            <!--<p>דף הבית->ארגונים</p>-->
+            <p><a class="home-link" href="Organizations.html">דף הבית </a>&#8592 פרויקטים</p>
+
+        </div>
+    </section>
+    <!-- Search bar  -->
+    <section>
+        <div>
+            <button onclick="openForm()" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
+                + הוספת פרויקט
+            </button>
+            <!--<input type="text" placeholder="חיפוש" />-->
+            <select id="ph" onchange="getval(this)"></select>
+            <select id="phSp" onchange="getvalSp(this)"></select>
+            <button type="button" id="btnReset" onclick="Reset()">נקה הכל</button>
+            <button class="btn btn-primary" id="ToProjectBook" onclick="ToProjectBook()">צפייה בספר הפרויקטים</button>
+
+        </div>
+    </section>
+    <!-- search bar ends  -->
+    <section>
+        <form id="pForm">
+            <table class="display nowrap" id="ProList" style=" width:100%">
+                <thead>
+                    <tr>
+                        <!--<td></td>-->
+                        <th>שם הפרויקט</th>
+                        <th>ארגון</th>
+                        <th>תיאור הפרויקט ומטרותיו</th>
+                        <th>איש הקשר בפרויקט</th>
+                        <th>טלפון</th>
+                        <th>סטטוס</th>
+                        <th>הערות</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <!--<tbody id="table-body"></tbody>-->
+            </table>
+            <center>
+                <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+            </center>
+        </form>
+    </section>
+
+    <!-- Add Modal -->
+    <div class="form-popup"
+         id="myForm"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="Modal title" id="exampleModalLongTitle">הוספת פרויקט חדש</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="newPro">
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label for="projectName">שם הפרויקט</label>
+                                <input type="text" class="form-control" id="projectName" required>
+                            </div>
+                            <div class="form-group col-md-12 ui-">
+                                <label for="organizationName">שם הארגון</label>
+                                <input type="text" class="form-control" id="organizationName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputSummary">תיאור הפרויקט</label>
+                                <textarea type="text" class="form-control" id="description" placeholder="פרט על הפרויקט" required></textarea>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="form-group col-6">
+                                    <label for="inputSpecialization4">התמחות</label>
+                                    <select id="inputSpecialization"></select>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="form-group col-6">
+                                    <label for="contact1">איש קשר 1</label>
+                                    <select id="contact1"><option value="0">בחר איש קשר</option></select>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="contact2">איש קשר 2</label>
+                                    <select id="contact2"><option value="0">בחר איש קשר</option></select>
+                                </div>
+                            </div>
+                            <br />
+
+
+                            <div class="modal-footer">
+                                <button type="submit" id="saveBTN" class="btn" data-dismiss="modal">שמור</button>
+                                <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Edit Modal -->
+    <div class="form-popup modal"
+         id="editModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" id="modal-dialog-edit" role="document">
+            <div class="modal-content" id="modal-content-edit">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="inputProjectName"></h4>
+                </div>
+                <div class="modal-body">
+                    <form id="proForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="from-group col-md-12">
+                                    <h5 id="inputOrgName"></h5>
+                                </div>
+                                <div class="from-group col-md-12">
+                                    <label for="inputSummary" style="font-weight:bold">תיאור הפרויקט</label>
+                                    <input type="text" class="form-control" id="inputSummary" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <br />
+                                <label for="inputStatus4" style="font-weight:bold">סטטוס</label>
+                                <select id="inputStatus"></select>
+
+                            </div>
+                            <br />
+
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="inputNotes4" style="font-weight:bold">הערות</label>
+                                        <input type="text" id="inputNotes" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <br />
+                                        <label for="inputUrl" style="font-weight:bold">קישור לפרויקט</label>
+                                        <input type="text" id="inputUrl" class="form-control">
+                                    </div>
+                                    <br />
+                                    <div class="row">
+                                        <div class="form-group col-6">
+                                            <label for="contact1">איש קשר 1</label>
+                                            <br />
+                                            <select id="contact1edit"><option value="0">בחר איש קשר</option></select>
+                                        </div>
+                                        <div class="form-group col-6">
+                                            <label for="contact2">איש קשר 2</label>
+                                            <br />
+                                            <select id="contact2edit"><option value="0">בחר איש קשר</option></select>
+                                        </div>
+                                    </div>
+                                    <br />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn" id="saveBTN" data-dismiss="modal">שמור</button>
+                            <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!--view modal-->
+
+    <div class="form-popup"
+         id="viewDiv"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <!--<div class="modal-header">
+                    <h5 class="Modal title" id="exampleModalLongTitle"></h5>
+                </div>-->
+                <div class="modal-body">
+                    <form id="newPro">
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <h4 id="ProjectNameView"> </h4>
+                            </div>
+
+                            <div class="from-group">
+                                <h5 id="inputOrgNameview"> </h5>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <label for="inputSummary" style="font-weight:bold">תיאור הפרויקט</label>
+                                    <p id="descriptionview">
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="inputSpecialization" style="font-weight:bold">התמחות</label>
+                                    <p id="inputSpecializationview">
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="inputStatus" style="font-weight:bold">סטטוס</label>
+                                    <p id="inputStatusview">
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="inputUrl" style="font-weight:bold">קישור</label>
+                                    <br />
+                                    <a id="inputUrlview" href=""></a>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputNotes4" style="font-weight:bold">הערות</label>
+                                <p id="inputNotesview"></p>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <b>
+                                        איש קשר 1
+                                    </b>
+                                    <p style="font-size:18px;" id="nameView"></p>
+                                    <p id="contactView"></p>
+                                </div>
+                                <div class="col">
+                                    <b id="Contact2">
+                                    </b>
+                                    <p style="font-size:18px;" id="nameView2"></p>
+                                    <p id="contactView2"></p>
+
+                                </div>
+                            </div>
+
+
+                            <div class="modal-footer">
+                                <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
+

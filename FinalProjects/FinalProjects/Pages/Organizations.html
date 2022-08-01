@@ -1,0 +1,1050 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+    <link href="card.css" rel="stylesheet" />
+
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <!--<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>-->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link href="Style.css" rel="stylesheet" />
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <script>
+        var addorg = {};
+
+        $(document).ready(function () {
+            init();
+
+        });
+
+        function showImages(data) {
+            let SpeText = $("#inputSpecialization").val();
+            let url = "../api/Specialization?SpeText=" + SpeText;
+            ajaxCall("GET", url, "", getSpecS, getSpecE);
+
+            console.log(data);
+            let organizationName = $("#organizationName").val();
+            let description = $("#description").val();
+            if (data.length == 0)
+                var logo = "uploadedFiles/NoImg.jpg";
+            else {
+                var logo = data[0];
+            }
+            addorg = {
+                OrganizationName: organizationName,
+                Description: description,
+                Logo: logo,
+                Notes: ' ',
+                statusId: 1
+            }
+
+        }
+
+        function getSpecS(specId) {
+            addorg.specializationId = specId;
+            ajaxCall("POST", "../api/Organizations", JSON.stringify(addorg), postSCB, postECB)
+            document.getElementById("myForm").style.display = "none";
+        }
+        function getSpecE(err) {
+            console.log(err);
+        }
+        $(document).on("click", "#logout", function () {
+            localStorage.clear();
+            window.location.href = "loginAdmin.html";
+        }
+        );
+
+        function init() {
+            if (localStorage.getItem("managerMail") == null) {
+                window.location.href = "loginAdmin.html";
+            }
+            ajaxCall("GET", "../api/Specialization", "", getSpeciali, getSpecialiError);
+            $("#newOrg").submit(saveorg);
+            $("#OrgForm").submit(SaveEdit);
+            ajaxCall("GET", "../api/Organizations", "", getOrg, getOrgError);
+            ajaxCall("GET", "../api/Status", "", getStstus, getStatusError);
+            $('#search').val("0");
+
+            $('#search').change(function () {
+                selectVal = $('#mySelect').val();
+
+                if (selectVal == 0) {
+                    $('#btnReset').prop("disabled", true);
+                }
+                else {
+                    $('#btnReset').prop("disabled", false);
+                }
+            });
+        }
+
+
+        function getSpeciali(SpecialList) {
+            console.log(SpecialList);
+            var str = '';
+            for (i = 0; i < SpecialList.length; i++) {
+                if (SpecialList[i].SpecializationType == 'ORG')
+                    str += '<option value="' + SpecialList[i].SpecializationName + '" id="' + (i + 1) + '">' + SpecialList[i].SpecializationName + '</option>'
+            }
+            str += '</select>'
+            console.log(str);
+            document.getElementById('inputSpecialization').innerHTML += str;
+            document.getElementById('inputSpecializationEdit').innerHTML += str;
+        }
+
+        function getSpecialiError(err) {
+            console.log(err);
+        }
+
+
+
+        function PutOrg(org) {
+            try {
+                let url = "../api/Organizations";
+                ajaxCall("PUT", url, JSON.stringify(org), PUTSCB, PUTECB);
+            } catch (err) {
+                console.log(err);
+            }
+            init();
+        }
+
+
+        async function PutContact(contact) {
+            try {
+                let urlcontact = "../api/OrgContacts";
+                ajaxCall("PUT", urlcontact, JSON.stringify(contact), PUTcontsctS, PUTcontsctE);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function SaveEdit() {
+            console.log("gzf")
+            let inputStatus1 = $("#inputStatus").val();
+            let url = "../api/Status?StatusText=" + inputStatus1;
+            ajaxCall("GET", url, "", getstatustS, getstatustE);
+            $("#editModal").hide();
+            return false;
+
+        }
+        function getSpecSedit(speId) {
+            org.specializationId = speId;
+            PutOrg(org);
+        }
+
+        function PUTcontsctS() {
+            console.log("good")
+        }
+        function PUTcontsctE() {
+            console.log("notgood")
+        }
+
+        function PUTSCB() {
+            console.log("good")
+        }
+        function PUTECB() {
+            console.log("notgood")
+        }
+        function getstatustS(sta) {
+            console.log(sta)
+            Newstatus = sta;
+            {
+                var data = new FormData();
+                var files = $("#files2").get(0).files;
+                // Add the uploaded file to the form data collection
+                if (files.length > 0) {
+                    for (f = 0; f < files.length; f++) {
+                        data.append("UploadedImage", files[f]);
+                    }
+                    data.append("name", organizationName);
+                }
+
+                // Ajax upload
+                $.ajax({
+                    type: "POST",
+                    url: "../Api/FileUpload",
+                    contentType: false,
+                    processData: false,
+                    data: data,
+                    success: saveImages,
+                    error: error
+                });
+            }
+        }
+
+        function saveImages(data) {
+            let organizationName = $("#inputorganizationName").html();
+            let description = $("#inputdescription").val();
+            if (data.length == 0) {
+                let strI = $("#inputLogo").html();
+                var Logo = strI.split('img src="../').pop().split('" style="width:200px">')[0];
+            }
+            else {
+                var Logo = data[0];
+            }
+            if (($("#inputNotes").val()) != "") {
+                note = $("#inputNotes").val();
+
+            }
+            else {
+                note = ' ';
+            }
+            org = {
+                OrganizationName: organizationName,
+                Description: description,
+                Notes: note,
+                Logo: Logo,
+                statusId: Newstatus
+            }
+            let SpeText = $("#inputSpecializationEdit").val();
+            let url = "../api/Specialization?SpeText=" + SpeText;
+            ajaxCall("GET", url, "", getSpecSedit, getSpecE);
+            let inputFName1 = $("#inputFirstName").val();
+            let inputLName1 = $("#inputLastName").val();
+            let inputJob1 = $("#inputRole").val();
+            let inputEmail1 = $("#inputEmail").val();
+            let inputPhone1 = $("#inputPhone").html();
+            contact = {
+                PhoneNumber: inputPhone1,
+                FirstName: inputFName1,
+                LastName: inputLName1,
+                Email: inputEmail1,
+                Role: inputJob1,
+                IsMajor: 1,
+                Notes: note,
+                OrganizationName: organizationName,
+            }
+            if (Newstatus != 2) {
+                StatusId = 1;
+               
+            }
+            else {
+                StatusId = 0;
+            }
+            let urlupdatecon = "../api/OrgContacts?contPhone=" + inputPhone1 + "&StatusId=" + StatusId;
+            ajaxCall("PUT", urlupdatecon, "", UpdatecontsctS, PUTcontsctE);
+            PutContact(contact);
+            document.getElementById("OrgForm").style.display = "none";
+            $('#OrgList').DataTable().destroy();
+            ajaxCall("GET", "../api/Organizations", "", getOrg, getOrgError);
+            return false;
+        }
+        function UpdatecontsctS() {
+            console.log("updateS")
+        }
+        function PUTcontsctE() {
+            console.log("updateE")
+        }
+
+
+        function getstatustE() {
+            console.log("notgood")
+        }
+
+        function markSelected(btn) {
+            $("#OrgList tr").removeClass("selected"); // remove seleced class from rows that were selected before
+            row = (btn.parentNode).parentNode; // button is in TD which is in Row
+            row.className = 'selected'; // mark as selected
+        }
+
+
+
+        function getOrgByName(name) {
+            for (i in orgsdata) {
+                if (orgsdata[i].OrganizationName == name)
+                    return orgsdata[i];
+            }
+            return null;
+        }
+
+
+        function getStstus(statusList) {
+            console.log(statusList);
+            document.getElementById('ph').innerHTML = '';
+            strH = '';
+            strH = '<select name="select1">\
+                                            <option id=0 value=0>כל הסטטוסים</option>';
+            document.getElementById('ph').innerHTML = strH;
+            var str = '';
+            for (i = 0; i < statusList.length; i++) {
+                str += '<option value="' + statusList[i].StatusText + '" id="' + (i + 1) + '">' + statusList[i].StatusText + '</option>'
+            }
+            str += '</select>'
+            console.log(str);
+            document.getElementById('ph').innerHTML += str;
+
+            document.getElementById('inputStatus').innerHTML += str;
+        }
+        function getStatusError(err) {
+            console.log(err);
+        }
+
+        /*function buttonEvents()*/
+        $(document).on("click", ".editBtn", function () {
+            document.getElementById("OrgForm").style.display = "block";
+            mode = "edit";
+            markSelected(this);
+            $("#editModal").show();
+            row.className = 'selected';
+            console.log(this.getAttribute('data-orgName'))
+            getOrgView(this.getAttribute('data-orgName'));
+            localStorage.setItem("mode", mode);
+            $("#editModal :input").prop("disabled", false);
+        });
+        $(document).on("click", ".deleteBtn", function () {
+            mode = "delete";
+            markSelected(this);
+            var result = confirm("האם אתה בטוח שברצונך למחוק ארגון זה?");
+            if (result) {
+                DeleteContactOfOrg(this.getAttribute('data-orgName'));
+            }
+        });
+
+
+        $(document).on("click", ".viewBtn", function () {
+            mode = "view";
+            markSelected(this);
+            $("#viewDiv").show();
+            row.className = 'selected';
+            $("#viewDiv :input").prop("disabled", false);
+            getOrgView(this.getAttribute('data-orgName'));
+            localStorage.setItem("mode", mode);
+        });
+
+        function getOrgView(orgName) {
+            let url = "../api/Organizations?orgName=" + orgName;
+            ajaxCall("GET", url, "", getOrgByNameS, getOrgByNameError);
+        }
+
+        function DeleteContactOfOrg(orgName) {
+            let url = "../api/OrgContacts?orgName=" + orgName;
+            localStorage.setItem("orgName", orgName);
+            ajaxCall("PUT", url, "", deleteContactsS, deleteContactsE);
+        }
+
+        function deleteContactsS() {
+            orgName = localStorage.getItem("orgName");
+            //localStorage.clear();
+            DeleteOrgByName(orgName);
+
+        }
+
+        function deleteContactsE(err) {
+            console.log(err);
+        }
+        function DeleteOrgByName(orgName) {
+            let url = "../api/Organizations?orgName=" + orgName;
+            ajaxCall("PUT", url, "", deleteOrgS, deleteOrgE);
+        }
+        function deleteOrgS() {
+            console.log("good")
+            init();
+        }
+        function deleteOrgE() {
+            console.log("not good")
+
+        }
+        function getval(status) {
+            selectedsta = status.selectedIndex;
+            if (selectedsta == 0) {
+                ajaxCall("GET", "../api/Organizations", "", getOrg, getOrgError);
+            }
+            else {
+                let url = "../api/Organizations?selectedsta=" + selectedsta;
+                ajaxCall("GET", url, "", getOrg, getOrgError);
+            }
+        }
+
+
+        function getOrgByNameS(org) {
+            console.log(org);
+            mode = localStorage.getItem("mode");
+            if (mode == "edit") {
+                getOrgEdit(org);
+            }
+            else
+                getOrgViewS(org);
+            //localStorage.clear();
+        }
+        function getOrgViewS(org) {
+
+            document.getElementById('organizationNameView').innerHTML = org.OrganizationName;
+            document.getElementById('descriptionview').innerHTML = org.Description;
+            if (org.Logo == "") {
+                document.getElementById('inputLogoview').innerHTML = "";
+            }
+            else {
+                document.getElementById('inputLogoview').innerHTML = "<img src='../" + org.Logo + "'style='width:200px'/>";
+            }
+            document.getElementById('inputSpecializationview').innerHTML = org.SpecializationName;
+            document.getElementById('inputStatusview').innerHTML = org.StatusText;
+            document.getElementById('inputNotesview').innerHTML = org.Notes;
+            getContactOfOrg(org.OrganizationName);
+        }
+        function getContactOfOrg(orgName) {
+            let url = "../api/OrgContacts?orgName=" + orgName;
+            ajaxCall("GET", url, "", getOrgContactS, getOrgContactError);
+        }
+        function getOrgContactS(contacts) {
+            console.log(contacts);
+            for (var i = 0; i < contacts.length; i++) {
+                if (contacts[i].IsMajor == true) {
+                    document.getElementById('nameView').innerHTML = contacts[i].FirstName + " " + contacts[i].LastName;
+                    document.getElementById('contactView').innerHTML = contacts[i].Role + "</br>" + contacts[i].Email + "</br>" + contacts[i].PhoneNumber;
+                }
+                else {
+                    document.getElementById('contact2').innerHTML = "איש קשר 2";
+                    document.getElementById('nameView2').innerHTML = contacts[i].FirstName + " " + contacts[i].LastName;
+                    document.getElementById('contactView2').innerHTML = contacts[i].Role + "</br>" + contacts[i].Email + "</br>" + contacts[i].PhoneNumber;
+                }
+            }
+        }
+        function getOrgContactError(err) {
+            console.log(err);
+        }
+        function getOrgEdit(org) {
+            console.log(org)
+            console.log(org.OrganizationName);
+            document.getElementById('inputorganizationName').innerHTML = org.OrganizationName;
+            document.getElementById('inputFirstName').value = org.FirstName;
+            document.getElementById('inputLastName').value = org.LastName;
+            document.getElementById('inputRole').value = org.Role;
+            document.getElementById('inputEmail').value = org.Email;
+            document.getElementById('inputPhone').innerHTML = org.PhoneNumber;
+            document.getElementById('inputdescription').value = org.Description;
+            if (org.Logo == "") {
+                document.getElementById('inputLogo').innerHTML = "";
+            }
+            else {
+                document.getElementById('inputLogo').innerHTML = "<img src='../" + org.Logo + "'style='width:200px'/>";
+            }
+            document.getElementById('inputNotes').value = org.Notes;
+            str = '';
+            str = '<select name="select1">\
+                                            <option value="'+ org.StatusText + '">' + org.StatusText + '</option>';
+            document.getElementById('inputStatus').innerHTML = '';
+            document.getElementById('inputStatus').innerHTML = str;
+            ajaxCall("GET", "../api/Status", "", getStstus, getStatusError);
+            str = '';
+            str = '<select name="select1">\
+                                            <option value="'+ org.SpecializationName + '">' + org.SpecializationName + '</option>';
+            document.getElementById('inputSpecializationEdit').innerHTML = '';
+            document.getElementById('inputSpecializationEdit').innerHTML = str;
+            ajaxCall("GET", "../api/Specialization", "", getSpeciali, getSpecialiError);
+        }
+
+        function getOrgByNameError(err) {
+            console.log(err);
+        }
+        function SaveOrgNameHerf(orgName, orgDescription) {
+            localStorage.setItem("orgName", orgName);
+            localStorage.setItem("orgDescription", orgDescription);
+
+            window.location.href = "projectsInOrganization.html";
+        }
+
+        function getOrg(orgs) {
+            console.log(orgs);
+            orgsdata = orgs;
+            try {
+                tbl = $('#OrgList').DataTable({
+                    data: orgs,
+                    pageLength: 5,
+                    columns: [
+                        {
+                            render: function (data, type, row, meta) {
+                                let organizationName = row.OrganizationName;
+                                let orgnizationDescription = row.Description;
+                                return '<a href="javascript:void(0);" onclick="SaveOrgNameHerf(\'' + organizationName + '\',\'' + orgnizationDescription + '\'); return false;">' + organizationName + '</a>';
+                                //randa = "<a href='projectsInOrganization.html' onclick='SaveOrgNameHerf(ff)'>" + organizationName + "</a>";
+                                //return randa;
+                            },
+                            width: '10%', targets: 2,
+                            data: "OrganizationName",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            data: "SpecializationName",
+                            width: '5%', targets: 0,
+                        },
+                        {
+                            data: "Description",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let FirstName = row.FirstName;
+                                let LastName = row.LastName;
+                                let Email = row.Email;
+                                randDiv = "<div>" + FirstName + " " + LastName + "</div><div>" + Email + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+
+                        },
+                        {
+                            data: "Role",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            data: "PhoneNumber",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            data: "StatusText",
+                            width: '5%', targets: 0,
+                        },
+                        {
+                            data: "Notes",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let orgName = "data-orgName='" + row.OrganizationName + "'";
+                                editBtn = "<button type='button' id='editBtn' class = 'editBtn btn btn-success' " + orgName + "> עריכה </button>";
+                                deletesBtn = "<button type='button' id='deleteBtn' class = 'deleteBtn btn btn-danger' " + orgName + "> מחיקה </button>";
+                                viewBtn = "<button type='button' class = 'viewBtn btn btn-info' " + orgName + "> צפייה </button>";
+                                return viewBtn + editBtn + deletesBtn;
+                            },
+                            width: '12%', targets: 2,
+                        },
+
+                    ],
+                    "bDestroy": true,
+                    fixedColumns: true,
+                    "oLanguage": {
+                        "sSearch": "חיפוש:",
+                        "sLengthMenu": "הראה _MENU_ תוצאות",
+                        "sInfo": "הראה _START_ עד _END_ מתוך _TOTAL_ רשומות",
+                        "sEmptyTable": "אין רשומות בטבלה זו",
+                        "sInfoEmpty": "אין רשומות להצגה",
+                        "oPaginate": {
+                            "sNext": "הדף הבא",
+                            "sPrevious": "הדף הקודם"
+                        }
+                    }
+                });
+                //buttonEvents();
+
+            }
+            catch (err) {
+                alert(err);
+            }
+
+
+        }
+
+
+
+        function getOrgError(err) {
+            console.log(err)
+        }
+
+        function saveorg() {
+            {
+                var data = new FormData();
+                var files = $("#files").get(0).files;
+                // Add the uploaded file to the form data collection
+                if (files.length > 0) {
+                    for (f = 0; f < files.length; f++) {
+                        data.append("UploadedImage", files[f]);
+                    }
+                    data.append("name", organizationName);
+                }
+
+                // Ajax upload
+                $.ajax({
+                    type: "POST",
+                    url: "../Api/FileUpload",
+                    contentType: false,
+                    processData: false,
+                    data: data,
+                    success: showImages,
+                    error: error
+                });
+            }
+
+            return false;
+        }
+
+
+
+
+        function postSCB(status) {
+            alert("ארגון נשמר")
+            let inputFName1 = $("#inputFName1").val();
+            let inputLName1 = $("#inputLName1").val();
+            let inputJob1 = $("#inputJob1").val();
+            let inputEmail1 = $("#inputEmail1").val();
+            let inputPhone1 = $("#inputPhone1").val();
+            //let inputPhone2 = $("#inputPhone2").val();
+            let organizationName = $("#organizationName").val();
+            addMajorcontact = {
+                PhoneNumber: inputPhone1,
+                FirstName: inputFName1,
+                LastName: inputLName1,
+                Email: inputEmail1,
+                Role: inputJob1,
+                IsMajor: 1,
+                OrganizationName: organizationName
+            };
+            ajaxCall("POST", "../api/OrgContacts", JSON.stringify(addMajorcontact), postScontact, postEcontact);
+        }
+        function postECB(err) {
+            alert("הארגון לא נשמר, נסה שנית")
+        }
+
+        function postScontact(status) {
+            alert("איש קשר נשמר");
+            let inputPhone2 = $("#inputPhone2").val();
+            if (inputPhone2 != "") {
+                let inputFName2 = $("#inputFName2").val();
+                let inputLName2 = $("#inputLName2").val();
+                let inputJob2 = $("#inputJob2").val();
+                let inputEmail2 = $("#inputEmail2").val();
+                let organizationName = $("#organizationName").val();
+                addAnothercontact = {
+                    PhoneNumber: inputPhone2,
+                    FirstName: inputFName2,
+                    LastName: inputLName2,
+                    Email: inputEmail2,
+                    Role: inputJob2,
+                    IsMajor: 0,
+                    OrganizationName: organizationName
+                }
+                ajaxCall("POST", "../api/OrgContacts", JSON.stringify(addAnothercontact), postScontact2, postEcontact2);
+            }
+        }
+
+        function postScontact2(status) {
+            $('#OrgList').DataTable().destroy();
+            ajaxCall("GET", "../api/Organizations", "", getOrg, getOrgError);
+            alert("איש קשר נשמר");
+        }
+        function postEcontact2(err) {
+            alert("איש קשר 2 לא נשמר, נסה שנית")
+        }
+        function getOrgStaE(err) {
+            alert("נסה שנית")
+        }
+
+
+        function postEcontact(err) {
+            alert("איש קשר לא נשמר, נסה שנית")
+        }
+
+        function openForm(id) {
+            ThisnewsId = id;
+            document.getElementById("myForm").style.display = "block";
+        }
+
+        function closeForm() {
+            document.getElementById("myForm").style.display = "none";
+            document.getElementById("OrgForm").style.display = "none";
+            document.getElementById("viewDiv").style.display = "none";
+            document.getElementById('contact2').innerHTML = "";
+            document.getElementById('nameView2').innerHTML = "";
+            document.getElementById('contactView2').innerHTML = "";
+            $("#editModal").hide();
+        }
+
+        function getReadIdfromDBError(arr) {
+            return arr;
+        }
+
+        function Reset() {
+            $("#ph").val('0');
+            ajaxCall("GET", "../api/Organizations", "", getOrg, getOrgError);
+        }
+        function error(data) {
+            console.log(data);
+        }
+
+
+    </script>
+
+    <title></title>
+</head>
+<body>
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>ארגונים</h5>
+        </div>
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" href="project.html">פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="studentInTeam.html">צוותים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">ארגונים</a>
+            </li>
+            <li>
+                <div class="dropdown">
+                    <button id="menu" class="nav-link active" aria-current="page">אנשי קשר</button>
+                    <div class="dropdown-content">
+                        <a class="nav-link" href="Contact.html">ארגונים</a>
+                        <a class="nav-link" href="guides.html">מנחים</a>
+                        <a class="nav-link" href="judges.html">שופטים</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="calender.html">יומן</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+
+
+        </ul>
+
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+            <!--<p>דף הבית->ארגונים</p>-->
+            <p><a class="home-link" href="Organizations.html">דף הבית </a>&#8592 ארגונים</p>
+
+        </div>
+    </section>
+    <!-- Search bar  -->
+    <section>
+        <div>
+            <button onclick="openForm()" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
+                + הוספת ארגון
+            </button>
+            <!--<input type="text" placeholder="חיפוש" />-->
+            <select id="ph" onchange="getval(this)"></select>
+            <button type="button" id="btnReset" onclick="Reset()">נקה הכל</button>
+        </div>
+    </section>
+    <!-- search bar ends  -->
+    <section>
+        <form id="pForm">
+            <table class="display nowrap" id="OrgList" style=" width:100%">
+                <thead>
+                    <tr>
+                        <!--<td></td>-->
+                        <th>שם הארגון</th>
+                        <th>תחום</th>
+                        <th>תיאור</th>
+                        <th>איש הקשר בארגון</th>
+                        <th>תפקיד</th>
+                        <th>טלפון</th>
+                        <th>סטטוס</th>
+                        <th>הערות</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <!--<tbody id="table-body"></tbody>-->
+            </table>
+            <center>
+                <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+            </center>
+   
+        </form>
+    </section>
+
+    <!-- Add Modal -->
+    <div class="form-popup"
+         id="myForm"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="Modal title" id="exampleModalLongTitle">הוספת ארגון חדש</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="newOrg">
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label for="organizationName">שם הארגון</label>
+                                <input type="text" class="form-control" id="organizationName" required>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="inputSummary">תיאור הארגון</label>
+                                <textarea type="text" class="form-control" id="description" placeholder="פרט על הארגון" required></textarea>
+                                <!--<input type="text" class="form-control" id="description" rows="4" cols="50" placeholder="פרט על הארגון" required>-->
+                            </div>
+                            <div>
+                                <input type="file" id="files" name="files" multiple="multiple" />
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-6">
+                                    <label for="inputSpecialization4">תחום ארגון</label>
+                                    <select id="inputSpecialization"></select>
+                                </div>
+
+                            </div>
+                            <!--<button type="button" id="buttonUpload">העלאת לוגו</button>-->
+                            <div class="row">
+                                <div class="col">
+                                    <b>
+                                        איש קשר ראשי
+                                    </b>
+                                    <div class="form-group">
+                                        <label for="inputName_4">שם פרטי</label>
+                                        <input type="text" class="form-control" id="inputFName1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputName_4">שם משפחה</label>
+                                        <input type="text" class="form-control" id="inputLName1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputJob">תפקיד</label>
+                                        <input type="text" class="form-control" id="inputJob1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputEmail4">אימייל</label>
+                                        <input type="email" class="form-control" id="inputEmail1" placeholder="כתובת מייל" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputPhone4">פלאפון</label>
+                                        <input type="tel" class="form-control" id="inputPhone1" placeholder="מספר פלאפון" required>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <b>
+                                        איש קשר 2
+                                    </b>
+                                    <div class="form-group">
+                                        <label for="inputName_4">שם פרטי</label>
+                                        <input type="text" class="form-control" id="inputFName2">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputName_4">שם משפחה</label>
+                                        <input type="text" class="form-control" id="inputLName2">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputJob">תפקיד</label>
+                                        <input type="text" class="form-control" id="inputJob2">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputEmail4">אימייל</label>
+                                        <input type="email" class="form-control" id="inputEmail2" placeholder="כתובת מייל">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputPhone4">פלאפון</label>
+                                        <input type="tel" class="form-control" id="inputPhone2" placeholder="מספר פלאפון">
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn" id="saveBTN" data-dismiss="modal">שמור</button>
+                                <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Edit Modal -->
+    <div class="form-popup modal"
+         id="editModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" id="modal-dialog-edit" role="document">
+            <div class="modal-content" id="modal-content-edit">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="inputorganizationName"></h5>
+                </div>
+                <div class="modal-body">
+                    <form id="OrgForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="from-group col-md-12">
+                                    <label for="inputSummary" style="font-weight:bold">תיאור הארגון</label>
+                                    <textarea type="text" class="form-control" id="inputdescription" required></textarea>
+                                    <!--<input type="text" class="form-control" id="inputdescription" required>-->
+                                </div>
+                                <br />
+                                <div class="from-group">
+                                    <label for="inputLogo" style="font-weight:bold">לוגו</label>
+                                   <p id="inputLogo"/>
+                                </div>
+                            </div>
+
+                            <div>
+                                <input type="file" id="files2" name="files" multiple="multiple" />
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="form-group col-6">
+                                    <label for="inputStatus4" style="font-weight:bold">סטטוס</label>
+                                    <select id="inputStatus"></select>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="inputSpecialization4"  style="font-weight:bold">תחום ארגון</label>
+                                    <br />
+                                    <select id="inputSpecializationEdit"></select>
+                                </div>
+                            </div>
+                            <br />
+                           
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="inputNotes4" style="font-weight:bold">הערות</label>
+                                        <input type="text" id="inputNotes" class="form-control">
+                                    </div>
+                                    <h5>
+                                        איש קשר ראשי
+                                    </h5>
+
+                                    <div class="form-group">
+                                        <label for="inputName_4" style="font-weight:bold">שם פרטי</label>
+                                        <input type="text" class="form-control" id="inputFirstName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputName_4" style="font-weight:bold">שם משפחה</label>
+                                        <input type="text" class="form-control" id="inputLastName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputJob" style="font-weight:bold">תפקיד</label>
+                                        <input type="text" class="form-control" id="inputRole" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputEmail4" style="font-weight:bold">אימייל</label>
+                                        <input type="email" class="form-control" id="inputEmail" placeholder="כתובת מייל" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputPhone4" style="font-weight:bold">פלאפון</label>
+                                        <p id="inputPhone"></p>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn" id="saveBTN" data-dismiss="modal">שמור</button>
+                            <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!--view modal-->
+
+    <div class="form-popup"
+         id="viewDiv"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <!--<div class="modal-header">
+                    <h5 class="Modal title" id="exampleModalLongTitle"></h5>
+                </div>-->
+                <div class="modal-body">
+                    <form id="newOrg">
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <h4 id="organizationNameView"> </h4>
+                            </div>
+
+                            <div class="from-group">
+                                <p id="inputLogoview" />
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="inputSummary" style="font-weight:bold">תיאור הארגון</label>
+                                <p id="descriptionview">
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label for="inputStatus" style="font-weight:bold">סטטוס</label>
+                                    <p id="inputStatusview">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="inputSpecialization" style="font-weight:bold">תחום</label>
+                                    <p id="inputSpecializationview"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputNotes4" style="font-weight:bold">הערות</label>
+                                <p id="inputNotesview"></p>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <b>
+                                        איש קשר 1
+                                    </b>
+                                    <p style="font-size:18px;" id="nameView"></p>
+                                    <p id="contactView"></p>
+                                </div>
+                                <div class="col">
+                                    <b id="contact2">
+
+                                    </b>
+                                    <p style="font-size:18px;" id="nameView2"></p>
+                                    <p id="contactView2"></p>
+
+                                </div>
+                            </div>
+
+
+                            <div class="modal-footer">
+                                <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</body>
+
+</html>
+

@@ -1,0 +1,607 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link href="card.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <!--<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>-->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+    <link href="project.css" rel="stylesheet" />
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+    <script src="../Scripts/munkers.js"></script>
+    <script lang="javascript" src="../Scripts/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/amcharts/3.21.15/plugins/export/libs/FileSaver.js/FileSaver.min.js"></script>
+    <script lang="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.15.2/xlsx.full.min.js"></script>
+    <script lang="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            ClassNumUp = 0;
+            studentsInArr = 0;
+            ajaxCall("GET", "../api/Mentors", "", getMentorsListS, getStatusError);
+            ajaxCall("GET", "../api/Presentation", "", getPresentationsS, getPresentationsError);
+
+        });
+        $(document).on("click", "#logout", function () {
+            localStorage.clear();
+            window.location.href = "loginAdmin.html";
+        }
+        );
+
+        function getPresentationsS(presentationsList) {
+            console.log(presentationsList);
+            if (presentationsList.length > 0) {
+                ajaxCall("GET", "../api/Presentation?type=1", "", getPresentationsDetailsInitS, getPresentationsDetailsInitSError);
+            }
+            else
+                document.getElementById("btnSave").style.display = "none";
+        }
+        function getPresentationsDetailsInitS(pd) {
+            console.log(pd);
+            document.getElementById("pForm").style.display = "none";
+            document.getElementById("header").style.display = "none";
+            document.getElementById("saveFinal").style.display = "none";
+            document.getElementById("btn").style.display = "none";
+            document.querySelector("#pres1Image").src = pd.Pres1;
+
+        }
+
+        function getPresentationsDetailsInitSError(err) {
+            console.log(err);
+        }
+
+        function getPresentationsError(err) {
+            console.log(err);
+        }
+
+        function RePlacement() {
+            presentations = {};
+            ajaxCall("DELETE", "../api/Presentation", JSON.stringify(presentations), getPresentationsDeleteS, getPresentationsDeleteSError);
+        }
+
+        function getPresentationsDeleteS() {
+            console.log("delete");
+            window.location.reload();
+        }
+        function getPresentationsDeleteSError() {
+            console.log("error");
+        }
+        function getMentorsListS(mentorsList) {
+            MentorsList = mentorsList;
+            JudgesList = [];
+            for (var i = 0; i < MentorsList.length; i++) {
+                if (MentorsList[i].IsJudge == 1)
+                    JudgesList.push(MentorsList[i]);
+            }
+            ajaxCall("GET", "../api/Teams", "", getTeamsListS, getStatusError);
+        }
+
+        function getTeamsListS(teamList) {
+            arr = [];
+            TeamsNum = teamList.length;
+            for (var i = 0; i < TeamsNum; i++) {
+                arr[i] = [];
+            }
+        }
+
+        function CheckifZero(i) {
+            if (i.selectedIndex == 1)
+                document.getElementById("breakDuration").disabled = true;
+
+        }
+
+        function GOTopresentation() {
+            AllTeam = 0;
+            document.getElementById("pForm").style.display = "none";
+            document.getElementById("header").style.display = "none";
+            document.getElementById("saveFinal").style.display = "block";
+            document.getElementById("btn").style.display = "none";
+            startTime = document.getElementById("startTime").value;
+            startdate = document.getElementById("start").value;
+            startdate = startdate.split("-");
+            Year = startdate[0];
+            Month = startdate[1];
+            Day = startdate[2];
+            startdate = Month + '-' + Day + '-' + Year + ' ';
+            nstrtime = new Date(startdate + startTime + ':00');
+            start = new Date(startdate + startTime + ':00');
+            NumberOfSeats = document.getElementById('NumberOfSeats').value;
+            PresentationLength = document.getElementById('PresentationLength').value;
+            NumberOfBreaks = parseInt(document.getElementById('NumberOfBreaks').value);//לשקול שהמערכת תחשב את זה בעזרת כמה פרויקטים יש חלקי כמה הצגות ברצף וכמה כיתות
+            presentationsInARow = Math.ceil((Math.ceil(parseInt(TeamsNum) / parseInt(NumberOfSeats)) / ((parseInt(NumberOfBreaks)) + 1)));
+            breakDuration = document.getElementById('breakDuration').value;
+            ClassNum = 0;
+            function addZero(i) {
+                if (i < 10) { i = "0" + i }
+                return i;
+            }
+            menId = 1;
+            for (var i = 0; i < NumberOfSeats; i++) {
+                start = new Date(startdate + startTime + ':00');
+                nstrtime = start;
+                str = '';
+                str += '<table id="Pr" class="styled-table">\
+                                    <tr>\
+                                        <th style="width: 10%;">שעות הצגה</th>\
+                                        <th style="width: 15%;">מנחה</th>\
+                                        <th style="width: 25%;">פרויקט</th>\
+                                        <th style="width: 20%;">שמות חברי הצוות</th>\
+                                        <th style="width: 15%;">שופט 1</th>\
+                                        <th style="width: 15%;">שופט 2</th>\
+                                    </tr>';
+                for (var z = 0; z < (NumberOfBreaks + 1); z++) {
+                    for (var j = 0; j < presentationsInARow; j++) {
+                        if (AllTeam == TeamsNum)
+                            break;
+                        if (j != 0)
+                            nstrtime.setMinutes(nstrtime.getMinutes() + parseInt(PresentationLength));
+                        let h = addZero(nstrtime.getHours());
+                        let m = addZero(nstrtime.getMinutes());
+                        arr[ClassNum]["Time"] = new Date(nstrtime);
+                        str += '<tr>\
+                                        <td class="'+ ClassNum + '">' + h + ':' + m + '</td>';
+                        stringSelect = ""
+                        strm = "";
+                        strm += '<select class="' + ClassNum + '" id="' + menId + '" onchange="OnChangeSelect(event,' + ClassNum + ',this)""><option value=0>בחר מנחה</option>';
+                        for (y = 0; y < MentorsList.length; y++) {
+                            if (y == 0 || MentorsList[y].PhoneNumber != MentorsList[y - 1].PhoneNumber)
+                                strm += '<option value="' + MentorsList[y].PhoneNumber + '" id="' + MentorsList[y].FirstName + ' ' + MentorsList[y].LastName + '">' + MentorsList[y].FirstName + ' ' + MentorsList[y].LastName + '</option>'
+                        }
+                        stringSelect += strm;
+                        stringSelect += '</select>'
+                        str += '<td class="' + ClassNum + '" id="' + (menId++) + '">' + stringSelect + '</td>\
+                                        <td id="'+ (menId++) + '">\
+                                                <select style = "width:200px"><option value=0 > בחר פרויקט<option><select>\
+                                                </td >\
+                                        <td class="'+ ClassNum + '" id="' + (menId++) + '"></td>';
+                        strj = "";
+                        strj += '<select class="' + ClassNum + '" id="' + (menId) + '" " onchange="OnChangeSelectJud1(event,' + ClassNum + ')"><option value=0>בחר שופט</option>';
+                        for (y = 0; y < JudgesList.length; y++) {
+                            if (y == 0 || JudgesList[y].PhoneNumber != JudgesList[y - 1].PhoneNumber)
+                                strj += '<option value="' + JudgesList[y].PhoneNumber + '" id="' + JudgesList[y].FirstName + ' ' + JudgesList[y].LastName + '">' + JudgesList[y].FirstName + ' ' + JudgesList[y].LastName + '</option>'
+                        }
+                        strj += '</select>'
+                        str += '<td id="' + (menId++) + '">' + strj + '</td>'
+                        strj2 = "";
+                        strj2 += '<select class="' + ClassNum + '" id="' + (menId) + '" onchange="OnChangeSelectJud2(event,' + ClassNum + ')"><option value=0>בחר שופט</option>';
+                        for (y = 0; y < JudgesList.length; y++) {
+                            if (y == 0 || JudgesList[y].PhoneNumber != JudgesList[y - 1].PhoneNumber)
+                                strj2 += '<option value="' + JudgesList[y].PhoneNumber + '" id="' + JudgesList[y].FirstName + ' ' + JudgesList[y].LastName + '">' + JudgesList[y].FirstName + ' ' + JudgesList[y].LastName + '</option>'
+                        }
+                        strj2 += '</select>'
+                        str += '<td id="' + (menId++) + '">' + strj2 + '</td>\
+                                         </tr>\
+                                    </tr>';
+                        menId++;
+                        AllTeam++;
+                        ClassNum++;
+                    }
+                    if (z != NumberOfBreaks) {
+                        str += '<tr><td colspan="6">הפסקה</td></tr>';
+                        nstrtime.setMinutes(nstrtime.getMinutes() + parseInt(breakDuration));
+                    }
+
+                }
+                str += '</table>';
+                if (i == 0)
+                    document.getElementById("pres1").innerHTML += str;
+                if (i == 1)
+                    document.getElementById("pres3").innerHTML += str;
+                if (i == 2)
+                    document.getElementById("pres2").innerHTML += str;
+            }
+        }
+
+        function OnChangeSelect(event, ClassNum, thisobj) {
+            console.log(event.target.value, ClassNum);
+            arr[ClassNum]["Mentor"] = event.target.value;
+            MentorIdOp = event.target.selectedIndex;
+            arr[ClassNum]["MentorName"] = event.target[MentorIdOp].id;
+            getMenPro(thisobj, ClassNum);
+        }
+
+        function getMenPro(mentor, classNumUp) {
+            ClassNumUp = classNumUp;
+            console.log(mentor.id);
+            UpdateProTd = parseInt(mentor.id) + 1;
+            SelMen = mentor.value;
+            let url = "../api/ProjectPreference?mentorPhone=" + SelMen + "&dummy=" + 1;
+            ajaxCall("GET", url, "", getProByMenS, getStatusError);
+        }
+
+        function getProByMenS(project) {
+            strp = "";
+            strp += '<select style="width:200px" onchange="OnChangeSelectPro(event,' + ClassNumUp + ',this)"><option value=0>בחר פרויקט</option>';
+            for (a = 0; a < project.length; a++) {
+                strp += '<option value="' + project[a].ProjectName + '" id="' + project[a].TeamId + '">' + project[a].ProjectName + '</option>'
+            }
+            strp += '</select>'
+            console.log(project);
+            document.getElementById(UpdateProTd).innerHTML = strp;
+        }
+
+        function OnChangeSelectPro(event, ClassNum, thisobj) {
+            console.log(event.target.value, ClassNum);
+            arr[ClassNum]["Project"] = event.target.value;
+            getStuPro(thisobj, ClassNum);
+        }
+
+        function getStuPro(teamId, ClassNum) {
+            studentsInArr = ClassNum;
+            UpdateStudent = UpdateProTd + 1;
+            Team = teamId[teamId.selectedIndex].id;
+            arr[ClassNum]["TeamId"] = Team;
+            let url = "../api/StudentsTeam?teamid=" + Team;
+            ajaxCall("GET", url, "", getStudentByTeamS, getStatusError);
+        }
+
+        function getStudentByTeamS(students) {
+            var strSt = '';
+            document.getElementById(UpdateStudent).innerHTML = '';
+            for (var i = 0; i < students.length; i++) {
+                strSt += students[i].FirstName + " " + students[i].LastName;
+                if ((students.length - i) != 1)
+                    strSt += ', ';
+            }
+            document.getElementById(UpdateStudent).innerHTML += strSt;
+            arr[studentsInArr]["Students"] = strSt;
+        }
+
+        function OnChangeSelectJud1(event, ClassNum) {
+            arr[ClassNum]["Judge1"] = event.target.value;
+            judge1IdOp = event.target.selectedIndex;
+            arr[ClassNum]["Judge1Name"] = event.target[judge1IdOp].id;
+        }
+
+        function OnChangeSelectJud2(event, ClassNum) {
+            if (event.target.value == arr[ClassNum]["Judge1"]) {
+                alert("יש לבחור שופטים שונים");
+                event.currentTarget.selectedIndex = 0;
+                return;
+            }
+            arr[ClassNum]["Judge2"] = event.target.value;
+            judge2IdoP = event.target.selectedIndex;
+            arr[ClassNum]["Judge2Name"] = event.target[judge2IdoP].id;
+        }
+
+        function getStatusError(err) {
+            console.log(err)
+        }
+        function jsonToArray(obj) {
+            var res = [];
+            res.push(obj.Time.getHours() + ':' + obj.Time.getMinutes());
+            res.push(obj.MentorName);
+            res.push(obj.Project);
+            res.push(obj.TeamId);
+            res.push(obj.Judge1Name);
+            res.push(obj.Judge2Name);
+            res.push(obj.Students);
+            return res;
+        }
+
+        async function deleteBeforeSave() {
+            presentations = {};
+         await axios.delete("../api/Presentation", {
+                data: presentations
+         });
+            SaveFinal();
+
+        }
+        function SaveFinal() {
+            insertPresentationsDetails();
+
+            presentations = {};
+            ////export to excel
+            var wb = XLSX.utils.book_new();
+            wb.Props = {
+                Title: "export to excel",
+                Subject: "Presentations",
+                Author: "Ruppin manager",
+                CreatedDate: new Date(Date.now())
+            };
+            var ws_data = [];
+            var keys = [];
+            var relevantFields = [];
+            wb.SheetNames.push("Presentations");
+            keys.push('שעת הצגה', 'מנחה', 'פרויקט', 'שמות חברי הצוות', 'שופט 1', 'שופט 2')
+            ws_data.push(keys);
+            for (var i = 0; i < arr.length; i++) {
+                relevantFields = [];
+                res = [];
+                res = jsonToArray(arr[i]);
+                relevantFields.push(res[0], res[1], res[2], res[6], res[4], res[5]);
+                ws_data.push(relevantFields);
+
+            }
+            console.log(ws_data);
+            var ws = XLSX.utils.aoa_to_sheet(ws_data);
+            wb.Sheets["Presentations"] = ws;
+
+            var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+            function s2ab(s) {
+
+                var buf = new ArrayBuffer(s.length);
+                var view = new Uint8Array(buf);
+                for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                return buf;
+
+            }
+            saveAs(new Blob([s2ab(wbout)], { type: "application/octet-stream" }), 'Presentations.xlsx');
+
+            console.log(arr);
+            for (var i = 0; i < arr.length; i++) {
+                when = new Date(arr[i].Time);
+                Year = when.getYear() + 1900;
+                Month = when.getMonth();
+                Day = when.getDay();
+                Houer = when.getHours();
+                Minute = when.getMinutes();
+                startdate = Month + '-' + Day + '-' + Year + ' ';
+                when = (startdate + Houer + ':' + Minute + ':00');
+                insertPresentation = {
+                    TeamId: arr[i].TeamId,
+                    Judge1PhoneNumber: arr[i].Judge1,
+                    Judge2PhoneNumber: arr[i].Judge2,
+                    PresentationId: i,
+                    StartDateAndTime: when,
+                };
+                console.log(insertPresentation);
+                ajaxCall("POST", "../api/Presentation", JSON.stringify(insertPresentation), insertPresentationS, getStatusError)
+            }
+
+        }
+        function insertPresentationS() {
+            console.log("good")
+        }
+
+
+
+        function insertPresentationsDetails() {
+            var presentionsDetails;
+
+            html2canvas(document.querySelector("#presentionsDetails")).then(function (canvas9) {
+                presentionsDetails = canvas9.toDataURL("image/png");
+
+                insertPresentationsDetailsObj = {
+                    Pres1: presentionsDetails,
+                };
+                console.log(insertPresentationsDetailsObj)
+                ajaxCall("POST", "../api/Presentation?type=1", JSON.stringify(insertPresentationsDetailsObj), insertPresentationsDetailsS, insertPresentationsDetailsError)
+                //    document.querySelector("#pres1Image").src = pres1Image;
+
+            });
+
+
+
+        }
+        function insertPresentationsDetailsS() {
+            console.log("Inserted Pres details");
+        }
+        function insertPresentationsDetailsError(err) {
+            console.log(err);
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>שיבוץ שופטים</h5>
+        </div>
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" href="project.html">פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="studentInTeam.html">צוותים</a>
+            </li>
+            <!--<li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">מנחים</a>
+            </li>-->
+            <li class="nav-item">
+                <a class="nav-link" href="Organizations.html">ארגונים</a>
+            </li>
+            <li>
+                <div class="dropdown">
+                    <button id="menu" class="nav-link active" aria-current="page">אנשי קשר</button>
+                    <div class="dropdown-content">
+                        <a class="nav-link" href="Contact.html">ארגונים</a>
+                        <a class="nav-link" href="guides.html">מנחים</a>
+                        <a class="nav-link" href="judges.html">שופטים</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="calender.html">יומן</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+        </ul>
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+            <!--<p>דף הבית->ארגונים</p>-->
+            <a class="home-link" href="Organizations.html">דף הבית</a> &#8592 <a class="home-link" href="studentInTeam.html">מנחים</a>
+            &#8592 שיבוץ שופטים
+            <button style="display:none" class="btn btn-primary" id="saveFinal" onclick="deleteBeforeSave()">שמור שיבוץ</button>
+        </div>
+    </section>
+    <br />
+    <section>
+        <div id="header">
+            <!--<p>דף הבית->ארגונים</p>-->
+            <h5>ענה על השאלות הבאות על מנת לקבל את זמני ההצגה</h5>
+        </div>
+    </section>
+    <br />
+    <section>
+        <form id="pForm">
+            <div class="row">
+                <div class="col-sm-3">
+
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    מספר מושבים
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    <select name="NumberOfSeats" id="NumberOfSeats" required>
+                        <option></option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-3">
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    שעת התחלה
+                </div>
+                <div class="col-sm-1" style="text-align:center">
+                    <input type="date" id="start" name="trip-start"
+                           min="2022-01-01" required>
+                </div>
+
+                <div class="col-sm-1" style="text-align:center">
+                    <input type="time" id="startTime" name="appt"
+                           min="08:00" max="20:00" required>
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-3">
+
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    זמן להצגה בודדת
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    <select name="PresentationLength" id="PresentationLength" required>
+                        <option></option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-3">
+
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    מספר הפסקות
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    <select name="NumberOfBreaks" id="NumberOfBreaks" onchange="CheckifZero(this)">
+                        <option></option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+
+                    </select>
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-3">
+
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    משך הפסקה
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+                    <select name="breakDuration" id="breakDuration">
+                        <option></option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="col-sm-3" style="text-align:center">
+
+                </div>
+            </div>
+            <br />
+        </form>
+        <div id="btn">
+
+            <button onclick="GOTopresentation()" class="btn btn-primary" style="margin-right:680px">
+                צור
+            </button>
+            <center>
+                <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+            </center>
+        </div>
+    </section>
+    <button onclick="RePlacement()" class="btn btn-primary" id="btnSave" >שבץ מחדש </button>
+
+    <div class="container-fluid" id="presentionsDetails">
+        <div class="row">
+            <img id="pres1Image" border="0" />
+            <div class="col" id="pres1">
+            </div>
+            <img id="pres2Image" border="0" />
+            <div class="col" id="pres2">
+            </div>
+        </div>
+        <div class="row">
+            <img id="pres3Image" border="0" />
+            <div class="col" id="pres3"></div>
+        </div>
+    </div>
+
+
+
+</body>
+</html>

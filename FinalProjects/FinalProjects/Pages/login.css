@@ -1,0 +1,102 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+body {
+    direction: rtl;
+    background-color: #eff3f9;
+    margin: 0 auto;
+}
+a.nav-link.active {
+    color: rgb(64, 148, 114);
+    font-weight: bold;
+}
+.menubar {
+    box-sizing: content-box;
+}
+
+h5 {
+    color: #005275;
+    padding-top: 1.5%;
+    font-weight: bold;
+
+}
+h1 {
+    text-align: center;
+    color: rgb(64, 148, 114);   
+    font-weight: bold;
+ 
+}
+.nav {
+    background-color: white;
+}
+
+.nav-link {
+    color: #005275;
+    font-weight: bold;
+}
+
+.nav-link:hover {
+        color: rgb(64, 148, 114);
+        font-weight: bold;
+    }
+
+.home-link {
+    color: black;
+    background-color: transparent;
+    text-decoration: none;
+}
+
+.home-link:hover {
+        color: rgb(64, 148, 114);
+    }
+
+input[type=text], input[type=password] {
+    width: 40%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+button:hover {
+        opacity: 0.8;
+    }
+
+#btnNew, #loginbtn {
+    width: auto;
+    padding: 10px 18px;
+    background-color: white;
+    border: 1px solid rgb(64, 148, 114);
+    color: rgb(64, 148, 114);
+    border-radius: 5px;
+}
+#btnCon, #btnSubmitAgain {
+    width: auto;
+    padding: 10px 18px;
+    background-color: #005275;
+    color: white;
+    border-radius: 5px;
+}
+
+#btnSubmitAgain {
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.container {
+    padding: 16px;
+    text-align: center;
+}
+ #login{
+     text-align:center;
+ }
+.imgRuppin {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+#space{
+  margin:40px;
+}

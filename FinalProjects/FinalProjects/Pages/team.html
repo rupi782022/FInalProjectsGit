@@ -1,0 +1,744 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link href="card.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <!--<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>-->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link href="Style.css" rel="stylesheet" />
+    <link href="project.css" rel="stylesheet" />
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <script src="../Scripts/munkers.js"></script>
+    <script lang="javascript" src="../Scripts/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/amcharts/3.21.15/plugins/export/libs/FileSaver.js/FileSaver.min.js"></script>
+
+</head>
+<body>
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>פרויקטים</h5>
+        </div>
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" href="project.html">פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="studentInTeam.html">צוותים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="Organizations.html">ארגונים</a>
+            </li>
+            <li>
+                <div class="dropdown">
+                    <button id="menu" class="nav-link active" aria-current="page">אנשי קשר</button>
+                    <div class="dropdown-content">
+                        <a class="nav-link" href="Contact.html">ארגונים</a>
+                        <a class="nav-link" href="guides.html">מנחים</a>
+                        <a class="nav-link" href="judges.html">שופטים</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="calender.html">יומן</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+        </ul>
+
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+            <!--<p>דף הבית->ארגונים</p>-->
+            <a class="home-link" href="Organizations.html">דף הבית</a> &#8592 <a class="home-link" href="studentInTeam.html">צוותים</a>
+            &#8592 שיבוץ צוות לפרויקט
+
+
+        </div>
+    </section>
+    <!-- Search bar  -->
+    <section>
+        <div>
+            <button onclick="Matrix()" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
+                + הבא שיבוץ מוצע
+            </button>
+            <!--<input type="text" placeholder="חיפוש" />-->
+            <!--<select id="ph" onchange="getval(this)"></select>-->
+            <select id="phSp" onchange="getvalSp(this)"></select>
+            <button class="btn btn-primary" id="saveFinal" onclick="SaveFinal()">שמור שיבוץ</button>
+        </div>
+    </section>
+    <!-- search bar ends  -->
+    <section>
+        <form id="pForm">
+            <table class="display nowrap" id="PreList" style=" width:100%">
+                <thead>
+                    <tr>
+                        <!--<td></td>-->
+                        <th>מספר צוות</th>
+                        <th>עדיפות 1</th>
+                        <th>עדיפות 2</th>
+                        <th>עדיפות 3</th>
+                        <th>התמחות</th>
+                        <th>שיבוץ מוצע</th>
+                        <th>שיבוץ סופי- ראש התמחות</th>
+                        <th>שם מנחה</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <!--<tbody id="table-body"></tbody>-->
+            </table>
+            <center>
+                <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+            </center>
+        </form>
+
+        <!--view Team-->
+        <div class="form-popup"
+             id="viewTeam"
+             tabindex="-1"
+             role="dialog"
+             aria-labelledby="addModal"
+             aria-hidden="true">
+
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <form id="viewT">
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <h4 id="TeamId"></h4>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <h5>
+                                            סטודנטים
+                                        </h5>
+                                        <p style="font-size:18px;" id="nameView"></p>
+                                        <p3 id="StudentView"></p3>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--View Project-->
+        <div class="form-popup"
+             id="viewPro"
+             tabindex="-1"
+             role="dialog"
+             aria-labelledby="addModal"
+             aria-hidden="true">
+
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <form id="newPro">
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <h4 id="ProjectNameView"> </h4>
+                                </div>
+                                <div class="from-group">
+                                    <h5 id="inputOrgNameview"> </h5>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-md-12">
+                                        <label for="inputSummary" style="font-weight:bold">תיאור הפרויקט</label>
+                                        <p id="descriptionview">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inputNotes4" style="font-weight:bold">הערות</label>
+                                    <p id="inputNotesview"></p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</body>
+</html>
+<script>
+    PreList=[];
+    Teamslist=[];
+    arr = [];
+    ProjectsList=[]
+    MentorsList = [];
+        afterHungArray = [];
+        rowNum = 0;
+    $(document).ready(function () {
+        init();
+    });
+    $(document).on("click", "#logout", function () {
+        localStorage.clear();
+        window.location.href = "loginAdmin.html";
+    }
+    );
+        function init() {
+        if (localStorage.getItem("managerMail") == null) {
+            window.location.href = "loginAdmin.html";
+        }
+        ajaxCall("GET", "../api/Specialization", "", getSpeciali, getStatusError);
+        getAllPreferences();
+        getMentors();       
+    }
+
+
+
+    function jsonToArray(obj) {
+        var res = [];
+        res.push(obj["FinalProj"]);
+        res.push(obj["TeamId"]);
+        res.push(obj["MentorName"]);
+        res.push(obj["SpecializationName"]);
+        //for (var i in obj)
+        //    res.push(obj[i]);
+        return res;
+    }
+
+    function SaveFinal() {
+            obj = {}
+        for (var i = 0; i < arr.length; i++) {
+            if (!obj[arr[i].FinalProj])
+                obj[arr[i].FinalProj] = 0;
+            obj[arr[i].FinalProj]++;
+            }
+            var hasErrors = Object.keys(obj).find(function (key) {
+                return obj[key] > 1;
+            });
+            if (hasErrors) {
+                alert("פרויקט " + hasErrors + " משובץ יותר מפעם אחת");
+            }
+            else {
+                count = 0;
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i].Mentor=='000') {
+                        alert(" לצוות " + arr[i].TeamId + " חסר מנחה");
+                    }
+                    count++;
+                //}
+                //if (count == arr.length) {
+                    for (var i = 0; i < arr.length; i++) {
+                        if (arr[i].FinalProj != arr[i].Pre1 && arr[i].FinalProj != arr[i].Pre2 && arr[i].FinalProj!=arr[i].Pre3) {
+                            insertPreference = {
+                                TeamId: arr[i].TeamId,
+                                ProjectName: arr[i].FinalProj,
+                                Preference: 10,
+                            };
+                            ajaxCall("GET", "../api/ProjectPreference?teamId=" + arr[i].TeamId + "&finalProj=" + arr[i].FinalProj, "", isPreferenceExistS, isPreferenceExistE);
+                        }
+                            let url = "../api/ProjectPreference?TeamId=" + arr[i].TeamId + "&FinalProj=" + arr[i].FinalProj + "&mentor=" + arr[i].Mentor;
+                            ajaxCall("PUT", url, "", PUTFinalProjS, PUTFinalProjE);
+                        
+                    }
+                }
+        }
+       ////export to excel
+        var wb = XLSX.utils.book_new();
+        wb.Props = {
+            Title: "export to excel",
+            Subject: "Team's Projects and mentors",
+            Author: "Ruppin manager",
+            CreatedDate: new Date(Date.now())
+        };
+        var ws_data = [];
+        var keys = [];
+        var relevantFields = [];
+        wb.SheetNames.push("Team's Projects and mentors");
+        keys.push('מספר צוות', 'התמחות', 'פרויקט נבחר','מנחה')
+        ws_data.push(keys);
+        for (var i = 0; i < arr.length; i++) {
+            relevantFields = [];
+            res = [];
+            res = jsonToArray(arr[i]);
+            relevantFields.push(res[1], res[3], res[0],res[2]);
+            ws_data.push(relevantFields);
+            
+        }
+        console.log(ws_data);
+        var ws = XLSX.utils.aoa_to_sheet(ws_data);
+        wb.Sheets["Team's Projects and mentors"] = ws;
+
+        var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+        function s2ab(s) {
+
+            var buf = new ArrayBuffer(s.length);
+            var view = new Uint8Array(buf);
+            for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+            return buf;
+
+        }
+        saveAs(new Blob([s2ab(wbout)], { type: "application/octet-stream" }), 'TeamsProjectsmentors.xlsx');
+            
+    }
+    function isPreferenceExistS(exist) {
+        if (!exist) {
+            ajaxCall("POST", "../api/ProjectPreference", JSON.stringify(insertPreference), InsertPreferenceS, InsertPreferenceE)
+
+        }
+    }
+
+    function isPreferenceExistE(ex) {
+        console.log(ex);
+    }
+
+    function InsertPreferenceS() {
+        console.log("good");
+        let url = "../api/ProjectPreference?TeamId=" + arr[i].TeamId + "&FinalProj=" + arr[i].FinalProj + "&mentor=" + arr[i].Mentor;
+        ajaxCall("PUT", url, "", PUTFinalProjS, PUTFinalProjE);
+    }
+    function InsertPreferenceE(err) {
+        console.log(err);
+    }
+
+   function PUTFinalProjS() {
+            console.log("good")
+            count--;
+            if (count==0) {
+                alert("השיבוץ נשמר בהצלחה");
+            }
+        }
+        function PUTFinalProjE() {
+            console.log("not good")
+        }
+
+    function getAllPreferences() {
+        ajaxCall("GET", "../api/ProjectPreference", "", getPreferencesListS, getPreferencesListE);
+    }
+    function getPreferencesListS(preList) {
+        console.log(preList);
+        PreList = preList;
+        getStudentsList();
+    }
+
+    function getStudentsList() {
+        ajaxCall("GET", "../api/Teams", "", getTeamsListS, getTeamsListE);
+    }
+    function getPreferencesListE(err) {
+        console.log(err);
+    }
+    function getTeamsListS(teamlist) {
+        console.log(teamlist);
+        Teamslist = teamlist;
+        getProjectBookList();
+        
+    }
+    function getTeamsListE(err) {
+        console.log(err);
+    }
+    function getProjectBookList() {
+        ajaxCall("GET", "../api/ProjectBook", "", getProjectsS, getProjectsE);
+
+    }
+    function getProjectsS(projectsList) {
+        ProjectsList = projectsList;
+        SaveInfoInArr();
+    }
+    function getProjectsE(err) {
+        console.log(err);
+    }
+    function Matrix() {
+        matrix = [];
+        afterHungArray = [];
+        if (ProjectsList.length > arr.length) {
+            Len = ProjectsList.length;
+        }
+        else Len = arr.length;
+        for (var i = 0; i < Len; i++) {
+            temp = [];
+            for (var j = 0; j < Len; j++) {
+                if (i>=arr.length || j>=ProjectsList.length) {
+                    temp[j] = 10;
+                }
+               else if (arr[i].Pre1 == ProjectsList[j].ProjectName) {
+                    temp[j] = 1;
+                }
+                else if (arr[i].Pre2 == ProjectsList[j].ProjectName) {
+                    temp[j] = 2;
+                }
+                else if (arr[i].Pre3 == ProjectsList[j].ProjectName) {
+                    temp[j] = 3;
+                }
+                else temp[j] = 10;
+            }
+            matrix[i] = temp;
+        }
+        console.log(matrix);
+   var m = new Munkres();
+  var indices = m.compute(matrix);
+  console.log(format_matrix(matrix), 'Lowest cost through this matrix:');
+  var total = 0;
+        for (var i = 0; i < indices.length; ++i) {
+            obj = {};
+    var row = indices[i][0], col = indices[i][1];
+     var value = matrix[row][col];
+      total += value;
+      if (row>=arr.length) {
+          obj["Team"]="לא נמצאה קבוצה מתאימה"
+      }
+      else
+          obj["Team"] = arr[row].TeamId;
+      if (col>=ProjectsList.length || value==10) {
+          obj["ProjectName"]="לא נמצא פרויקט מתאים"
+      }
+      else
+      obj["ProjectName"] = ProjectsList[col].ProjectName;
+      afterHungArray.push(obj);
+  console.log('(' + row + ', ' + col + ') -> ' + value);
+   }
+ 
+  console.log('total cost:', total);
+        console.log(afterHungArray);
+        saveAfterHungToDB();
+    }
+
+
+    function SaveInfoInArr() {
+        //proNames = [];
+        //for (var i = 0; i < ProjectsList.length; i++) {
+        //    proNames.push(ProjectsList.ProjectName);
+        //}
+        arr = [];
+        for (var i = 0; i < Teamslist.length; i++) {
+            let obj = {};
+            for (var j = 0; j < PreList.length; j++) {
+                if (Teamslist[i].TeamId == PreList[j].TeamId) {
+                    if (PreList[j]["SuggestedSolution"] == true) {
+                        obj["ProjSuggestion"] = PreList[j].ProjectName;
+                    }
+                    if (PreList[j]["FinalSolution"] == true) {
+                        obj["FinalProj"] = PreList[j].ProjectName;
+                        str = '<select onchange="OnChangeSelect(event,' + i + ')" name="select1" class="projectsOp">\
+                        <option value="'+ PreList[j].ProjectName + '">' + PreList[j].ProjectName + '</option>';
+                    }
+                    switch (PreList[j].Preference) {
+                        case 1:
+                            obj["Pre1"] = PreList[j].ProjectName;
+                            break;
+                        case 2:
+                            obj["Pre2"] = PreList[j].ProjectName;
+                            break;
+                        case 3:
+                            obj["Pre3"] = PreList[j].ProjectName;
+                    }
+                }
+                if (j + 1 == PreList.length) {
+                    obj["TeamId"] = Teamslist[i].TeamId;
+                    obj["SpecializationName"] = Teamslist[i].SpecializationName;
+                    if (!("Pre1" in obj)) {
+                        obj["Pre1"] = "";
+                    }
+                    if (!("Pre2" in obj)) {
+                        obj["Pre2"] = "";
+                    }
+                    if (!("Pre3" in obj)) {
+                        obj["Pre3"] = "";
+                    }
+                    if (!obj["ProjSuggestion"]) {
+                        obj["ProjSuggestion"] = "";
+                    }
+                    if (!obj["FinalProj"]) {
+                        obj["SelectProject"] = "";
+                        str = '<select onchange="OnChangeSelect(event,' + i + ')" name="select1" class="projectsOp">\
+                        <option value="בחר פרויקט">בחר פרויקט</option>';
+                    }
+                    if (afterHungArray.length != 0) {
+                        for (var k = 0; k < afterHungArray.length; k++) {
+                            if (afterHungArray[k].Team == Teamslist[i].TeamId) {
+                                obj["FinalProj"] = afterHungArray[k].ProjectName;
+                                prochoose = afterHungArray[k].ProjectName;
+                                obj["ProjSuggestion"] = afterHungArray[k].ProjectName;
+                                str = "";
+                                str = '<select onchange="OnChangeSelect(event,' + k + ')" name="select1" class="projectsOp">\
+                        <option value="'+ afterHungArray[k].ProjectName + '">' + afterHungArray[k].ProjectName + '</option>';
+                                break;
+                            }
+                        }
+                    }
+                 
+                        for (var z = 0; z < ProjectsList.length; z++) {
+                            str += '<option value="' + ProjectsList[z].ProjectName + '" id="' + ProjectsList[z].ProjectName + '">' + ProjectsList[z].ProjectName+ '</option>';
+                        }
+                        str += '</select>'
+                        obj["SelectProject"] = str;
+                    //    obj["MentorsList"] = MentorsList;
+                    
+                    obj["Mentor"] = Teamslist[i].MentorPhoneNumber;
+                    arr.push(obj);
+                }
+            }
+         
+        }
+        randerInfo(arr);
+    }
+
+        function OnChangeSelect(event,k)
+        {
+            console.log(event.target.value, k)
+            arr[k]["FinalProj"] = event.target.value;
+        }
+        function OnChangeSelectMentor(event, TeamId) {
+            console.log(TeamId)
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i].TeamId == TeamId) {
+                    console.log(i)
+                    arr[i]["Mentor"] = event.target.value;
+                    arr[i]["MentorName"] = event.target.options[event.target.selectedIndex].text;
+
+                    break;
+                }
+            }
+        }
+
+    
+
+    function saveAfterHungToDB() {
+        for (var i = 0; i < afterHungArray.length; i++) {
+            let url = "../api/ProjectPreference?TeamId=" + afterHungArray[i].Team + "&Project=" + afterHungArray[i].ProjectName;
+            ajaxCall("PUT", url, "", PUTAfterHungS, PUTAfterHungE);
+        }
+    }
+    function PUTAfterHungS() {
+        console.log("good")
+        SaveInfoInArr();
+    }
+    function PUTAfterHungE() {
+        console.log("not good")
+    }
+    function getMentors() {
+        ajaxCall("GET", "../api/Mentors", "", getMentorsListS, getMentorsListE);
+
+    }
+    function getMentorsListS(mentorsList) {
+        console.log(mentorsList);
+        MentorsList = [];
+        for (y = 0; y < mentorsList.length; y++) {
+            if (y == 0 || mentorsList[y].PhoneNumber != MentorsList[(MentorsList.length)-1].PhoneNumber)
+                MentorsList.push(mentorsList[y]);
+        }
+    }
+    function getMentorsListE(err) {
+        console.log(err)
+    }
+    function randerInfo(arr) {
+        try {
+            tbl = $('#PreList').DataTable({
+                data: arr,
+                bPaginate: false,
+                bInfo:false,
+                columns: [
+                    {
+                        render: function (data, type, row, meta) {
+                            let teamid = row.TeamId;
+                            return '<a href="javascript:void(0);" onclick="showTeam(\'' + teamid+ '\'); return false;">' + teamid + '</a>';
+                        },
+                        data: "TeamId",
+                        width: '12%', targets: 0,
+                    },
+                    {
+                        render: function (data, type, row, meta) {
+                            let Pre = row.Pre1;
+                            return '<a href="javascript:void(0);" onclick="showPro(\'' + Pre + '\'); return false;">' + Pre + '</a>';
+                        },
+                        data: "Pre1",
+                        width: '12%', targets: 0,
+                    },
+                    {
+                        render: function (data, type, row, meta) {
+                            let Pre = row.Pre2;
+                            return '<a href="javascript:void(0);" onclick="showPro(\'' + Pre + '\'); return false;">' + Pre + '</a>';
+                        },
+                        data: "Pre2",
+                        width: '12%', targets: 0,
+                    },
+                    {
+                        render: function (data, type, row, meta) {
+                            let Pre = row.Pre3;
+                            return '<a href="javascript:void(0);" onclick="showPro(\'' + Pre + '\'); return false;">' + Pre + '</a>';
+                        },
+                        data: "Pre3",
+                        width: '12%', targets: 0,
+                    },
+                    {
+                        data: "SpecializationName",
+                        width: '12%', targets: 0,
+                    },
+                    {
+                        data: "ProjSuggestion" ,
+                        width: '8%', targets: 0,
+                    },
+                    {
+                        data:"SelectProject",
+                        width: '12%', targets: 0,
+
+                    },
+                      {
+                          render: function (data, type, row, meta) {
+                              stringSelect=""
+                              str = "";
+                              fullName = "";
+                              for (i = 0; i < MentorsList.length; i++) {
+                                  if (MentorsList[i].PhoneNumber == row["Mentor"])
+                                      fullName = MentorsList[i].FirstName + ' ' + MentorsList[i].LastName;
+                                  str += '<option value="' + MentorsList[i].PhoneNumber + '" id="' + MentorsList[i].FirstName + ' ' + MentorsList[i].LastName + '">' + MentorsList[i].FirstName + ' ' + MentorsList[i].LastName + '</option>'
+                              }
+                              fullName = (fullName != "") ? fullName : "בחר מנחה";
+                              row["MentorName"] = fullName;
+                               stringSelect = '<select onchange="OnChangeSelectMentor(event,' + row.TeamId + ')" name="select1"><option value="' + row.Mentor + '">'+fullName+'</option>';
+
+                              stringSelect += str;
+     
+                              stringSelect += '</select>'
+                              return stringSelect;
+                          },
+                          width: '10%', targets: 0,
+                    },
+                   
+
+                ],
+                "bDestroy": true,
+                fixedColumns: true,
+                "oLanguage": {
+                    "sSearch": "חיפוש:",
+                    "sLengthMenu": "הראה _MENU_ תוצאות",
+                    "sInfo": "הראה _START_ עד _END_ מתוך _TOTAL_ רשומות",
+                    "sEmptyTable": "אין רשומות בטבלה זו",
+                    "sInfoEmpty": "אין רשומות להצגה",
+                    "oPaginate": {
+                        "sNext": "הדף הבא",
+                        "sPrevious": "הדף הקודם"
+                    }
+                }
+            });
+            //buttonEvents();
+
+        }
+        catch (err) {
+            alert(err);
+        }
+    }
+
+    function showTeam(teamId) {
+        mode = "view";
+        $("#viewTeam").show();
+        $("#viewDiv :input").prop("disabled", false);
+        getTeamView(teamId);
+        localStorage.setItem("mode", mode);
+    }
+
+    function getTeamView(teamid) {
+        let url = "../api/StudentsTeam?teamid=" + teamid;
+        ajaxCall("GET", url, "", getStudentByTeamS, getStatusError);
+    }
+
+    function getStudentByTeamS(students) {
+        var str = '';
+        document.getElementById('StudentView').innerHTML = str;
+        for (var i = 0; i < students.length; i++) {
+            document.getElementById('TeamId').innerHTML = 'צוות מספר '+students[0].TeamId;
+            str += students[i].FirstName + " " + students[i].LastName + " " + students[i].PhoneNumber;
+            str += '<br />';
+        }
+        document.getElementById('StudentView').innerHTML += str;
+    }
+
+    function showPro(pre) {
+        mode = "view";
+        $("#viewPro").show();
+        $("#viewDiv :input").prop("disabled", false);
+        getProView(pre);
+        localStorage.setItem("mode", mode);
+    }
+
+    function getProView(pre) {
+        let url = "../api/ContactInProjects?ProName=" + pre;
+        ajaxCall("GET", url, "", getProViewS, getStatusError);
+    }
+    function getProViewS(pro) {
+                document.getElementById('inputOrgNameview').innerHTML = pro[0].OrganizationName;
+                document.getElementById('ProjectNameView').innerHTML = pro[0].ProjectName;
+                document.getElementById('descriptionview').innerHTML = pro[0].ProjectDescription;
+                document.getElementById('inputNotesview').innerHTML = pro[0].Notes;
+            }
+
+
+    function getSpeciali(SpecialList) {
+        console.log(SpecialList);
+        document.getElementById('phSp').innerHTML = "";
+        var str = '';
+        str = '<select class="btn btn-primary" name="select1">\
+                                                                <option value="0">כל ההתמחויות</option>'
+        for (i = 0; i < SpecialList.length; i++) {
+            if (SpecialList[i].SpecializationType == 'RUP')
+                str += '<option value="' + SpecialList[i].SpecializationName + '" id="' + (i + 1) + '">' + SpecialList[i].SpecializationName + '</option>'
+        }
+        str += '</select>'
+        console.log(str);
+        document.getElementById('phSp').innerHTML += str;
+    }
+
+
+    function getvalSp(status) {
+        spe = document.getElementById('phSp').value;
+        if (spe == 0)
+            randerInfo(arr)
+        else {
+            arrSp = [];
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i].SpecializationName == spe)
+                    arrSp.push(arr[i])
+            }
+            randerInfo(arrSp);
+        }
+    }
+
+    function getStatusError(err) {
+        console.log(err);
+    }
+
+    function closeForm() {
+        document.getElementById("viewTeam").style.display = "none";
+        document.getElementById("viewPro").style.display = "none";
+    }
+</script>

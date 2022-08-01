@@ -1,0 +1,762 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossorigin="anonymous" />
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+            crossorigin="anonymous"></script>
+    <link href="card.css" rel="stylesheet" />
+
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <!--<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>-->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link href="Style.css" rel="stylesheet" />
+    <script src="../Scripts/ajaxCallsWithKey.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            init();
+
+        });
+        $(document).on("click", "#logout", function () {
+            localStorage.clear();
+            window.location.href = "loginAdmin.html";
+        }
+        );
+
+        function init() {
+            if (localStorage.getItem("managerMail") == null) {
+                window.location.href = "loginAdmin.html";
+            }
+            orgName = localStorage.getItem("orgName");
+            $("#proForm").submit(SaveEdit);
+            document.getElementById("orgName").innerHTML = orgName;
+            document.getElementById("orgDescription").innerHTML = localStorage.getItem("orgDescription");
+            getProjects(orgName);
+            ajaxCall("GET", "../api/ProjectStatus", "", getStstus, getStatusError);
+            $('#search').val("0");
+
+            $('#search').change(function () {
+                selectVal = $('#mySelect').val();
+
+                if (selectVal == 0) {
+                    $('#btnReset').prop("disabled", true);
+                }
+                else {
+                    $('#btnReset').prop("disabled", false);
+                }
+            });
+        }
+
+        $(document).on("click", ".deleteBtn", function () {
+            mode = "delete";
+            markSelected(this);
+            var result = confirm("האם אתה בטוח שברצונך למחוק פרויקט זה?");
+            if (result) {
+                DeleteProj(this.getAttribute('data-proName'));
+            }
+        });
+
+        $(document).on("click", ".editBtn", function () {
+            document.getElementById("proForm").style.display = "block";
+            mode = "edit";
+            markSelected(this);
+            $("#editModal").show();
+            row.className = 'selected';
+            console.log(this.getAttribute('data-proName'))
+            getProView(this.getAttribute('data-proName'));
+            localStorage.setItem("mode", mode);
+            $("#editModal :input").prop("disabled", false);
+        });
+
+        $(document).on("click", ".viewBtn", function () {
+            mode = "view";
+            markSelected(this);
+            $("#viewDiv").show();
+            row.className = 'selected';
+            $("#viewDiv :input").prop("disabled", false);
+            getProView(this.getAttribute('data-proName'));
+            localStorage.setItem("mode", mode);
+        });
+
+        function SaveEdit() {
+            console.log("gzf")
+            let inputStatus1 = $("#inputStatus").val();
+            let url = "../api/ProjectStatus?StatusProText=" + inputStatus1;
+            ajaxCall("GET", url, "", getstatustS, getstatustE);
+            $("#editModal").hide();
+            return false;
+        }
+
+        function getstatustS(sta) {
+            console.log(sta)
+            Newstatus = sta;
+            let projectName = $('#inputProjectName').html();
+            let organizationName = $("#inputOrgName").html();
+            let description = $("#inputSummary").val();
+            if (($("#inputNotes").val()) != "") {
+                note = $("#inputNotes").val();
+            }
+            else {
+                note = ' ';
+            }
+            if (($("#inputUrl").val()) != "") {
+                url = $("#inputUrl").val();
+            }
+            else {
+                url = ' ';
+            }
+            pro = {
+                ProjectName: projectName,
+                ProjectDescription: description,
+                Notes: note,
+                Url: url,
+                statusId: Newstatus
+            }
+            PutPro(pro);
+            let phone = $("#contact1edit").val();
+            addContactInpro = {
+                ProjectName: projectName,
+                OrganizationName: organizationName,
+                ContactPhoneNumber: phone,
+                Contact1: 1,
+            }
+            ajaxCall("PUT", "../api/ContactInProjects", JSON.stringify(addContactInpro), CheckPostPut, postECB)
+            document.getElementById("proForm").style.display = "none";
+
+        }
+
+        function PutPro(pro) {
+            try {
+                let url = "../api/Projects";
+                ajaxCall("PUT", url, JSON.stringify(pro), PUTSCB, PUTECB);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        async function CheckPostPut() {
+            let url = "../api/ContactInProjects?ProName=" + $('#inputProjectName').html();
+            ajaxCall("GET", url, "", postPut, getOrgByNameError);
+        }
+
+        async function postPut(pro) {
+            let phone = $("#contact2edit").val();
+            if (phone != 0) {
+                let projectName = $('#inputProjectName').html();
+                let organizationName = $("#inputOrgName").html();
+                addContactInpro = {
+                    ProjectName: projectName,
+                    OrganizationName: organizationName,
+                    ContactPhoneNumber: phone,
+                    Contact1: 0,
+                }
+                if (pro.length > 1)
+                    ajaxCall("PUT", "../api/ContactInProjects", JSON.stringify(addContactInpro), PUTSCB, postECB);
+                else
+                    ajaxCall("POST", "../api/ContactInProjects", JSON.stringify(addContactInpro), PUTSCB, postECB);
+            }
+            init();
+            return false;
+        }
+
+
+        function PUTSCB() {
+            console.log("good")
+        }
+        function PUTECB() {
+            console.log("notgood")
+        }
+
+        function getstatustE() {
+            console.log("notgood")
+        }
+
+        async function PutContact(contact) {
+            try {
+                let urlcontact = "../api/OrgContacts";
+                ajaxCall("PUT", urlcontact, JSON.stringify(contact), PUTcontsctS, PUTcontsctE);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function PUTcontsctS() {
+            console.log("good")
+        }
+        function PUTcontsctE() {
+            console.log("notgood")
+        }
+
+
+        function getProView(proName) {
+            let url = "../api/ContactInProjects?ProName=" + proName;
+            ajaxCall("GET", url, "", getProByNameS, getOrgByNameError);
+        }
+
+
+        function getOrgByNameError(err) {
+            console.log(err);
+        }
+
+        function getProByNameS(pro) {
+            console.log(pro);
+            mode = localStorage.getItem("mode");
+            if (mode == "edit") {
+                getProEdit(pro);
+            }
+            else
+                getProViewS(pro);
+        }
+
+        function getProViewS(pro) {
+            for (var i = 0; i < pro.length; i++) {
+                if (pro[i].Contact1 == true) {
+                    document.getElementById('inputOrgNameview').innerHTML = pro[i].OrganizationName;
+                    document.getElementById('ProjectNameView').innerHTML = pro[i].ProjectName;
+                    document.getElementById('descriptionview').innerHTML = pro[i].ProjectDescription;
+                    document.getElementById('inputSpecializationview').innerHTML = pro[i].SpecializationName;
+                    document.getElementById('inputStatusview').innerHTML = pro[i].StatusText;
+                    document.getElementById('inputUrlview').setAttribute("href", pro[i].Url);
+                    document.getElementById('inputUrlview').innerHTML = pro[i].Url;
+                    document.getElementById('inputNotesview').innerHTML = pro[i].Notes;
+                    document.getElementById('nameView').innerHTML = pro[i].FirstName + " " + pro[i].LastName;
+                    document.getElementById('contactView').innerHTML = pro[i].Role + "</br>" + pro[i].Email + "</br>" + pro[i].PhoneNumber;
+                }
+                else {
+                    document.getElementById('Contact2').innerHTML = "איש קשר 2";
+                    document.getElementById('nameView2').innerHTML = pro[i].FirstName + " " + pro[i].LastName;
+                    document.getElementById('contactView2').innerHTML = pro[i].Role + "</br>" + pro[i].Email + "</br>" + pro[i].PhoneNumber;
+                }
+            }
+        }
+
+
+        function getOrgContactError(err) {
+            console.log(err);
+        }
+
+
+
+
+        function getProEdit(pro) {
+            document.getElementById('contact2edit').innerHTML = '';
+            for (var i = 0; i < pro.length; i++) {
+                if (pro[i].Contact1 == true) {
+                    document.getElementById('inputProjectName').innerHTML = pro[i].ProjectName;
+                    document.getElementById('inputOrgName').innerHTML = pro[i].OrganizationName;
+                    document.getElementById('inputSummary').value = pro[i].ProjectDescription;
+                    document.getElementById('inputNotes').value = pro[i].Notes;
+                    document.getElementById('inputUrl').value = pro[i].Url;
+                    strC = '';
+                    strC2 = '';
+                    strC = '<select name="select1">\
+                                                                    <option value="' + pro[i].PhoneNumber + '" id="' + pro[i].PhoneNumber + '">' + pro[i].FirstName + ' ' + pro[i].LastName + '</option>';
+                    document.getElementById('contact1edit').innerHTML = '';
+                    document.getElementById('contact1edit').innerHTML = strC;
+                }
+                else {
+                    strC2 = '<select name="select1">\
+                                                                    <option value="' + pro[i].PhoneNumber + '" id="' + pro[i].PhoneNumber + '">' + pro[i].FirstName + ' ' + pro[i].LastName + '</option>';
+                    document.getElementById('contact2edit').innerHTML = strC2;
+                }
+            }
+            getContactOfPro(pro[0].OrganizationName);
+            str = '';
+            str = '<select name="select1">\
+                                                                    <option value="'+ pro[0].StatusText + '">' + pro[0].StatusText + '</option>';
+            document.getElementById('inputStatus').innerHTML = '';
+            document.getElementById('inputStatus').innerHTML = str;
+            ajaxCall("GET", "../api/ProjectStatus", "", getStstus, getStatusError);
+        }
+
+        function getContactOfPro(orgname) {
+            let url = "../api/OrgContacts?orgName=" + orgname;
+            ajaxCall("GET", url, "", getProContactS, getOrgContactError);
+        }
+
+        function getProContactS(contacts) {
+            var str = '<option value="0">בחר איש קשר</option>';
+            str = '';
+            for (i = 0; i < contacts.length; i++) {
+                str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+            }
+            str += '</select>';
+            document.getElementById("contact1edit").innerHTML += str;
+
+            if (contacts.length > 1 && document.getElementById("contact2edit").innerHTML != '') {
+                var str = '<option value="0">בחר איש קשר</option>';
+                str = '';
+                for (i = 0; i < contacts.length; i++) {
+                    str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+                }
+                str += '</select>';
+                document.getElementById("contact2edit").innerHTML += str;
+            }
+            else if (contacts.length > 1) {
+                var str = '<option value="0">בחר איש קשר</option>';
+                document.getElementById("contact2edit").innerHTML = str;
+                str = '';
+                for (i = 0; i < contacts.length; i++) {
+                    str += '<option value="' + contacts[i].PhoneNumber + '" id="' + contacts[i].PhoneNumber + '">' + contacts[i].FirstName + ' ' + contacts[i].LastName + '</option>'
+                }
+                str += '</select>';
+                document.getElementById("contact2edit").innerHTML += str;
+
+            }
+        }
+
+
+        function markSelected(btn) {
+            $("#projList tr").removeClass("selected");
+            row = (btn.parentNode).parentNode;
+            row.className = 'selected';
+        }
+
+        function getProjects(orgName) {
+            url = "../api/Projects?orgName=" + orgName;
+            ajaxCall("GET", url, "", getOrgProjects, getOrgProjectsError);
+        }
+        function getOrgProjects(projList) {
+            console.log(projList);
+            try {
+                tbl = $('#projList').DataTable({
+                    data: projList,
+                    pageLength: 5,
+                    columns: [
+                        {
+                            data: "ProjectName",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            data: "ProjectDescription",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let FirstName = row.FirstName;
+                                let LastName = row.LastName;
+                                let Email = row.Email;
+                                randDiv = "<div>" + FirstName + " " + LastName + "</div><div>" + Email + "</div>"
+                                return randDiv;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                        {
+                            data: "Role",
+                            width: '4%', targets: 0,
+                        },
+                        {
+                            data: "PhoneNumber",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            data: "StatusText",
+                            width: '8%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                url = '<a href="' + row.Url + '">' + row.Url + '</a>';
+                                return url;
+                            },
+                            width: '15%', targets: 0,
+                        },
+                        {
+                            render: function (data, type, row, meta) {
+                                let proName = "data-proName='" + row.ProjectName + "'";
+                                editBtn = "<button type='button'  class = 'editBtn btn btn-success' " + proName + "> עריכה </button>";
+                                deletesBtn = "<button type='button' class = 'deleteBtn btn btn-danger' " + proName + "> מחיקה </button>";
+                                viewBtn = "<button type='button' class = 'viewBtn btn btn-info' " + proName + "> צפייה </button>";
+                                return viewBtn + editBtn + deletesBtn;
+                            },
+                            width: '10%', targets: 2,
+                        },
+                    ],
+                    "bDestroy": true,
+                    fixedColumns: true,
+                    "oLanguage": {
+                        "sSearch": "חיפוש:",
+                        "sLengthMenu": "הראה _MENU_ תוצאות",
+                        "sInfo": "הראה _START_ עד _END_ מתוך _TOTAL_ רשומות",
+                        "sEmptyTable": "אין רשומות בטבלה זו",
+                        "sInfoEmpty": "אין רשומות להצגה",
+                        "oPaginate": {
+                            "sNext": "הדף הבא",
+                            "sPrevious": "הדף הקודם"
+                        }
+                    }
+                });
+
+
+            }
+            catch (err) {
+                alert(err);
+            }
+
+        }
+        function getOrgProjectsError(err) {
+            console.log(err)
+        }
+
+
+        function getStstus(statusList) {
+            console.log(statusList);
+            document.getElementById('ph').innerHTML = '';
+            strH = '';
+            strH = '<select name="select1">\
+                                                        <option value=0>כל הסטטוסים</option>';
+            document.getElementById('ph').innerHTML = strH;
+            var str = '';
+            for (i = 0; i < statusList.length; i++) {
+                str += '<option value="' + statusList[i].StatusText + '" id="' + (i + 1) + '">' + statusList[i].StatusText + '</option>'
+            }
+            str += '</select>'
+            console.log(str);
+            document.getElementById('ph').innerHTML += str;
+
+            document.getElementById('inputStatus').innerHTML += str;
+        }
+        function getStatusError(err) {
+            console.log(err);
+        }
+
+        function DeleteProj(proName) {
+            let url = "../api/Projects?proName=" + proName;
+            ajaxCall("DELETE", url, "", DeleteProjS, DeleteProjE);
+        }
+
+        function DeleteProjS() {
+            console.log("good");
+            init();
+
+        }
+        function DeleteProjE() {
+            console.log("not good");
+        }
+
+        function closeForm() {
+            document.getElementById("proForm").style.display = "none";
+            document.getElementById("viewDiv").style.display = "none";
+            document.getElementById('nameView2').innerHTML = "";
+            document.getElementById('contactView2').innerHTML = "";
+            $("#editModal").hide();
+        }
+
+        function getval(status) {
+            orgName = localStorage.getItem("orgName");
+            selectedsta = status.selectedIndex;
+            if (selectedsta == 0) {
+                getProjects(orgName);
+            }
+            else {
+                let url = "../api/Projects?selectedsta=" + selectedsta + "&orgName=" + orgName;
+                ajaxCall("GET", url, "", getOrgProjects, getOrgProjectsError);
+            }
+        }
+
+        function Reset() {
+            $("#ph").val('0');
+            getProjects(orgName);
+        }
+
+
+
+    </script>
+
+    <title></title>
+</head>
+<body>
+    <!-- Nav start  -->
+    <!-- Nav start  -->
+    <nav>
+        <div class="head">
+
+            <a href="Organizations.html">
+                <img src="../image/Welearn.767d6c7c.png" alt="Trulli" width="140" height="40" align="right" />
+            </a>
+            <h5>ארגונים</h5>
+        </div>
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" href="project.html">פרויקטים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="studentInTeam.html">צוותים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">ארגונים</a>
+            </li>
+            <li>
+                <div class="dropdown">
+                    <button id="menu" class="nav-link active" aria-current="page">אנשי קשר</button>
+                    <div class="dropdown-content">
+                        <a class="nav-link" href="Contact.html">ארגונים</a>
+                        <a class="nav-link" href="guides.html">מנחים</a>
+                        <a class="nav-link" href="judges.html">שופטים</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="calender.html">יומן</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logout" herf="#">התנתק</a>
+            </li>
+
+
+        </ul>
+
+    </nav>
+    <!-- nav ends  -->
+    <section>
+        <div>
+
+            <p>
+                <a class="home-link" href="Organizations.html">דף הבית</a> &#8592 <a class="org-link" href="Organizations.html">ארגונים</a>
+                &#8592 פרויקטים בארגון
+            </p>
+
+        </div>
+    </section>
+    <section>
+        <div>
+
+            <h6>שם הארגון</h6>
+
+        </div>
+        <div id="orgName"></div>
+    </section>
+    <section>
+        <div>
+
+            <h6>תיאור הארגון</h6>
+            <div id="orgDescription"></div>
+
+        </div>
+        <br />
+    </section>
+    <!-- Search bar  -->
+    <section>
+        <div>
+            <!--<input type="text" placeholder="חיפוש" />-->
+            <select id="ph" onchange="getval(this)"></select>
+            <button type="button" id="btnReset" onclick="Reset()">נקה הכל</button>
+        </div>
+    </section>
+    <!-- search bar ends  -->
+    <section>
+        <form id="pForm">
+            <table class="display nowrap" id="projList" style=" width:100%">
+                <thead>
+                    <tr>
+                        <!--<td></td>-->
+                        <th>שם הפרויקט</th>
+                        <th>תיאור</th>
+                        <th>איש הקשר בפרויקט</th>
+                        <th>תפקיד</th>
+                        <th>טלפון</th>
+                        <th>סטטוס</th>
+                        <th>קישור לפרויקט</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <!--<tbody id="table-body"></tbody>-->
+            </table>
+            <center>
+                <img src="../image/Rupin.png" width="100" height="100" class="imgRuppin" />
+            </center>
+        </form>
+    </section>
+
+    <!-- Edit Modal -->
+    <div class="form-popup modal"
+         id="editModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" id="modal-dialog-edit" role="document">
+            <div class="modal-content" id="modal-content-edit">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="inputProjectName"></h4>
+                </div>
+                <div class="modal-body">
+                    <form id="proForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="from-group col-md-12">
+                                    <h5 id="inputOrgName"></h5>
+                                </div>
+                                <div class="from-group col-md-12">
+                                    <label for="inputSummary" style="font-weight:bold">תיאור הפרויקט</label>
+                                    <input type="text" class="form-control" id="inputSummary" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputStatus4" style="font-weight:bold">סטטוס</label>
+                                <select id="inputStatus"></select>
+
+                            </div>
+                            <br />
+
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="inputNotes4" style="font-weight:bold">הערות</label>
+                                        <input type="text" id="inputNotes" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputUrl" style="font-weight:bold">קישור לפרויקט</label>
+                                        <input type="text" id="inputUrl" class="form-control">
+                                    </div>
+                                    <div class="row">
+                                        <div class="form-group col-6">
+                                            <label for="contact1">איש קשר 1</label>
+                                            <br />
+                                            <select id="contact1edit"><option value="0">בחר איש קשר</option></select>
+                                        </div>
+                                        <div class="form-group col-6">
+                                            <label for="contact2">איש קשר 2</label>
+                                            <br />
+                                            <select id="contact2edit"><option value="0">בחר איש קשר</option></select>
+                                        </div>
+                                    </div>
+
+                                    <!--<div class="form-group">
+                                        <label for="inputName_4" style="font-weight:bold">שם פרטי</label>
+                                        <input type="text" class="form-control" id="inputFirstName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputName_4" style="font-weight:bold">שם משפחה</label>
+                                        <input type="text" class="form-control" id="inputLastName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputJob" style="font-weight:bold">תפקיד</label>
+                                        <input type="text" class="form-control" id="inputRole" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputEmail4" style="font-weight:bold">אימייל</label>
+                                        <input type="email" class="form-control" id="inputEmail" placeholder="כתובת מייל" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputPhone4" style="font-weight:bold">פלאפון</label>
+                                        <p id="inputPhone"></p>
+                                    </div>-->
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn" id="saveBTN" data-dismiss="modal">שמור</button>
+                            <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <!--view modal-->
+
+    <div class="form-popup"
+         id="viewDiv"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <!--<div class="modal-header">
+                    <h5 class="Modal title" id="exampleModalLongTitle"></h5>
+                </div>-->
+                <div class="modal-body">
+                    <form id="newPro">
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <h4 id="ProjectNameView"> </h4>
+                            </div>
+
+                            <div class="from-group">
+                                <h5 id="inputOrgNameview"> </h5>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <label for="inputSummary" style="font-weight:bold">תיאור הפרויקט</label>
+                                    <p id="descriptionview">
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="inputSpecialization" style="font-weight:bold">התמחות</label>
+                                    <p id="inputSpecializationview">
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="inputStatus" style="font-weight:bold">סטטוס</label>
+                                    <p id="inputStatusview">
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="inputUrl" style="font-weight:bold">קישור</label>
+                                    <br />
+                                    <a id="inputUrlview" href=""></a>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputNotes4" style="font-weight:bold">הערות</label>
+                                <p id="inputNotesview"></p>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <b>
+                                        איש קשר 1
+                                    </b>
+                                    <p style="font-size:18px;" id="nameView"></p>
+                                    <p id="contactView"></p>
+                                </div>
+                                <div class="col">
+                                    <b id="Contact2">
+                                    </b>
+                                    <p style="font-size:18px;" id="nameView2"></p>
+                                    <p id="contactView2"></p>
+
+                                </div>
+                            </div>
+
+
+                            <div class="modal-footer">
+                                <button type="button" onclick="closeForm()" class="btn btn-secondary" data-dismiss="modal">סגור</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
+
